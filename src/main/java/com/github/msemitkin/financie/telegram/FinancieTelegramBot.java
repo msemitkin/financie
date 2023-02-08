@@ -71,8 +71,8 @@ public class FinancieTelegramBot extends TelegramLongPollingBot {
                 String reply = "Saved%nTotal spend in this month: %.1f%nIn this category: %.1f"
                     .formatted(statistics.total(), statistics.totalInCategory());
                 sendMessage(getChatId(update), reply, message.getMessageId());
-            } catch (IllegalArgumentException e) {
-                sendMessage(getChatId(update), "Failed to process", message.getMessageId());
+            } catch (MessageException e) {
+                sendMessage(getChatId(update), e.getMessage(), message.getMessageId());
             }
         } else {
             logger.info("Received update without message");
@@ -89,12 +89,15 @@ public class FinancieTelegramBot extends TelegramLongPollingBot {
 
     private void validateTransaction(String messageText) {
         String[] split = messageText.split(" ", 2);
-        if (
-            !(split.length == 2
-              && NumberUtils.isParsable(split[0])
-              && split[1].length() <= CATEGORY_NAME_MAX_LENGTH)
-        ) {
-            throw new IllegalArgumentException("Cannot parse message");
+        if (split.length != 2 || !NumberUtils.isParsable(split[0])) {
+            throw new MessageException("""
+                I don't understand you.
+                To record transaction, send it in the following format: <amount> <category>
+                Example: 500 food
+                """);
+        }
+        if (split[1].length() > CATEGORY_NAME_MAX_LENGTH) {
+            throw new MessageException("Category name is too long :(");
         }
     }
 
