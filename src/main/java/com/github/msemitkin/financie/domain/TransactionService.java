@@ -8,6 +8,7 @@ import com.github.msemitkin.financie.persistence.repository.TransactionRepositor
 import com.github.msemitkin.financie.persistence.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -36,7 +37,7 @@ public class TransactionService {
     public void saveTransaction(SaveTransactionCommand command) {
         Long categoryId = getOrCreateCategoryId(command.category());
         TransactionEntity transaction = new TransactionEntity(
-            null, command.userId(), command.amount(), categoryId, command.description());
+            null, command.userId(), command.amount(), categoryId, command.description(), LocalDateTime.now());
         transactionRepository.save(transaction);
     }
 

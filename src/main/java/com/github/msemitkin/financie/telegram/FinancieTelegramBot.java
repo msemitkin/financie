@@ -1,6 +1,8 @@
 package com.github.msemitkin.financie.telegram;
 
 import com.github.msemitkin.financie.domain.SaveTransactionCommand;
+import com.github.msemitkin.financie.domain.Statistics;
+import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.TransactionService;
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -15,6 +17,8 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.Optional;
+
 @Component
 public class FinancieTelegramBot extends TelegramLongPollingBot {
     private static final Logger logger = LoggerFactory.getLogger(FinancieTelegramBot.class);
@@ -22,15 +26,18 @@ public class FinancieTelegramBot extends TelegramLongPollingBot {
 
     private final String username;
     private final TransactionService transactionService;
+    private final StatisticsService statisticsService;
 
     public FinancieTelegramBot(
         @Value("${bot.telegram.username}") String username,
         @Value("${bot.telegram.token}") String botToken,
-        TransactionService transactionService
+        TransactionService transactionService,
+        StatisticsService statisticsService
     ) {
         super(botToken);
         this.username = username;
         this.transactionService = transactionService;
+        this.statisticsService = statisticsService;
     }
 
     @Override
@@ -46,24 +53,29 @@ public class FinancieTelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        logger.info("Received update");
         Message message = update.getMessage();
         if (message.hasText()) {
-            try {
-                User sender = message.getFrom();
-                String messageText = message.getText();
+            logger.info("Received update with message");
 
+            User sender = message.getFrom();
+            String messageText = message.getText();
+
+            try {
                 validateTransaction(messageText);
 
                 long userId = transactionService.getOrCreateUserByTelegramId(sender.getId());
                 double amount = parseAmount(messageText);
                 String category = parseCategory(messageText);
                 transactionService.saveTransaction(new SaveTransactionCommand(userId, amount, category, null));
-                sendMessage(update.getMessage().getChatId().toString(), "Successfully saved", message.getMessageId());
-                //TODO reply with statistics
+                Statistics statistics = statisticsService.getStatistics(userId, category);
+                String reply = "Saved%nTotal spend in this month: %.1f%nIn this category: %.1f"
+                    .formatted(statistics.total(), statistics.totalInCategory());
+                sendMessage(getChatId(update), reply, message.getMessageId());
             } catch (IllegalArgumentException e) {
-                sendMessage(update.getMessage().getChatId().toString(), "Failed to process", message.getMessageId());
+                sendMessage(getChatId(update), "Failed to process", message.getMessageId());
             }
+        } else {
+            logger.info("Received update without message");
         }
     }
 
@@ -97,5 +109,13 @@ public class FinancieTelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+
+    private String getChatId(Update update) {
+        return Optional.ofNullable(update.getMessage())
+            .map(Message::getChatId)
+            .map(Object::toString)
+            .orElse(null);
     }
 }

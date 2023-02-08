@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "user",
+@Table(name = "users",
     uniqueConstraints = {@UniqueConstraint(columnNames = "telegramId")})
 public class UserEntity {
     @Id
