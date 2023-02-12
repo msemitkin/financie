@@ -1,43 +1,73 @@
 package com.github.msemitkin.financie.telegram;
 
+import com.github.msemitkin.financie.domain.CategoryStatistics;
 import com.github.msemitkin.financie.domain.SaveTransactionCommand;
 import com.github.msemitkin.financie.domain.Statistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
+import com.github.msemitkin.financie.domain.Transaction;
 import com.github.msemitkin.financie.domain.TransactionService;
+import com.github.msemitkin.financie.telegram.transaction.IncomingTransaction;
+import com.github.msemitkin.financie.telegram.transaction.TransactionParser;
+import com.github.msemitkin.financie.telegram.transaction.TransactionRecognizer;
+import com.github.msemitkin.financie.telegram.transaction.TransactionValidator;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import jakarta.annotation.Nullable;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.Optional;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+
+import static com.github.msemitkin.financie.telegram.command.BotCommand.MONTHLY_STATISTICS;
+import static com.github.msemitkin.financie.telegram.command.BotCommand.START;
+import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatDate;
+import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
+import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
+import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
+import static java.util.Objects.requireNonNull;
 
 @Component
 public class FinancieTelegramBot extends TelegramLongPollingBot {
     private static final Logger logger = LoggerFactory.getLogger(FinancieTelegramBot.class);
-    private static final int CATEGORY_NAME_MAX_LENGTH = 64;
 
     private final String username;
     private final TransactionService transactionService;
     private final StatisticsService statisticsService;
+    private final TransactionParser transactionParser;
+    private final TransactionValidator transactionValidator;
+    private final TransactionRecognizer transactionRecognizer;
 
     public FinancieTelegramBot(
         @Value("${bot.telegram.username}") String username,
         @Value("${bot.telegram.token}") String botToken,
         TransactionService transactionService,
-        StatisticsService statisticsService
-    ) {
+        StatisticsService statisticsService,
+        TransactionParser transactionParser,
+        TransactionValidator transactionValidator,
+        TransactionRecognizer transactionRecognizer) {
         super(botToken);
         this.username = username;
         this.transactionService = transactionService;
         this.statisticsService = statisticsService;
+        this.transactionParser = transactionParser;
+        this.transactionValidator = transactionValidator;
+        this.transactionRecognizer = transactionRecognizer;
     }
 
     @Override
@@ -53,60 +83,125 @@ public class FinancieTelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        Message message = update.getMessage();
-        if (message.hasText()) {
-            logger.info("Received update with message");
-
-            User sender = message.getFrom();
-            String messageText = message.getText();
-
-            try {
-                validateTransaction(messageText);
-
-                long userId = transactionService.getOrCreateUserByTelegramId(sender.getId());
-                double amount = parseAmount(messageText);
-                String category = parseCategory(messageText);
-                transactionService.saveTransaction(new SaveTransactionCommand(userId, amount, category, null));
-                Statistics statistics = statisticsService.getStatistics(userId, category);
-                String reply = "Saved%nTotal spend in this month: %.1f%nIn this category: %.1f"
-                    .formatted(statistics.total(), statistics.totalInCategory());
-                sendMessage(getChatId(update), reply, message.getMessageId());
-            } catch (MessageException e) {
-                sendMessage(getChatId(update), e.getMessage(), message.getMessageId());
-            }
+        if (update.hasMessage()) {
+            handleMessage(update);
+        } else if (update.hasCallbackQuery()) {
+            handleCallbackQuery(update);
         } else {
-            logger.info("Received update without message");
+            logger.warn("Got unrecognized update {}", update);
         }
     }
 
-    private double parseAmount(String messageText) {
-        return Double.parseDouble(messageText.substring(0, messageText.indexOf(" ")));
-    }
+    private void handleMessage(Update update) {
+        Message message = update.getMessage();
+        logger.info("Received message");
+        if (message.hasText()) {
+            String messageText = message.getText();
+            Long chatId = getChatId(update);
+            long senderTelegramId = requireNonNull(getSenderTelegramId(update));
 
-    private String parseCategory(String messageText) {
-        return messageText.substring(messageText.indexOf(" ") + 1);
-    }
+            if (START.getCommand().equals(messageText)) {
+                sendWelcomeMessage(chatId);
+            } else {
+                if (MONTHLY_STATISTICS.getCommand().equals(messageText)) {
+                    handleGetMonthlyStatisticsRequest(chatId, senderTelegramId);
+                } else if (transactionRecognizer.hasTransactionFormat(messageText)) {
+                    try {
+                        transactionValidator.validateTransaction(messageText);
 
-    private void validateTransaction(String messageText) {
-        String[] split = messageText.split(" ", 2);
-        if (split.length != 2 || !NumberUtils.isParsable(split[0])) {
-            throw new MessageException("""
-                I don't understand you.
-                To record transaction, send it in the following format: <amount> <category>
-                Example: 500 food
-                """);
+                        IncomingTransaction incomingTransaction = transactionParser.parseTransaction(messageText);
+
+                        long userId = transactionService.getOrCreateUserByTelegramId(senderTelegramId);
+                        SaveTransactionCommand command = new SaveTransactionCommand(
+                            userId, incomingTransaction.amount(), incomingTransaction.category(), null);
+                        transactionService.saveTransaction(command);
+
+                        sendSuccessfullySavedTransaction(chatId, userId, message.getMessageId(), incomingTransaction.category());
+                    } catch (MessageException e) {
+                        sendMessage(chatId, e.getMessage(), message.getMessageId(), null);
+                    }
+                }
+            }
         }
-        if (split[1].length() > CATEGORY_NAME_MAX_LENGTH) {
-            throw new MessageException("Category name is too long :(");
+    }
+
+    private void handleGetMonthlyStatisticsRequest(Long chatId, Long userTelegramId) {
+        long userId = transactionService.getOrCreateUserByTelegramId(userTelegramId);
+        List<CategoryStatistics> statistics = statisticsService
+            .getMonthlyStatistics(userId);
+
+        if (statistics.isEmpty()) {
+            String text = "No transactions in " + formatMonth(LocalDate.now().getMonth());
+            sendMessage(chatId, text, null, null);
+            return;
+        }
+
+        InlineKeyboardMarkup.InlineKeyboardMarkupBuilder keyboardBuilder = InlineKeyboardMarkup.builder();
+        statistics.forEach(stats -> {
+            String text = "%.1f: %s".formatted(stats.amount(), stats.category());
+            String callbackData = toJsonFormat(Map.of("type", "monthlystats", "category", stats.category()));
+            keyboardBuilder.keyboardRow(List.of(inlineButton(text, callbackData)));
+        });
+        InlineKeyboardMarkup keyboard = keyboardBuilder.build();
+        sendMessage(chatId, LocalDate.now().getMonth().toString().concat(" statistics"), null, keyboard);
+    }
+
+    private void sendWelcomeMessage(Long chatIt) {
+        ReplyKeyboardMarkup markup = ReplyKeyboardMarkup.builder()
+            .keyboardRow(new KeyboardRow(List.of(button("Monthly statistics"))))
+            .build();
+        sendMessage(chatIt, "Welcome", null, markup);
+    }
+
+    private void handleCallbackQuery(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        String data = callbackQuery.getData();
+        JsonObject jsonObject = new Gson().fromJson(data, JsonObject.class);
+        if ("monthlystats".equals(jsonObject.get("type").getAsString())) {
+            String category = jsonObject.get("category").getAsString();
+            Long telegramUserId = requireNonNull(getSenderTelegramId(update));
+            long userId = transactionService.getOrCreateUserByTelegramId(telegramUserId);
+            List<Transaction> transactionsInCategory = statisticsService
+                .getMonthlyCategoryStatistics(userId, category);
+
+            String header = LocalDate.now().getMonth().toString().concat(" statistics");
+            String message = transactionsInCategory.stream()
+                .reduce(new StringBuilder(header),
+                    (builder, curr) -> {
+                        String text = "%n%s : %.1f".formatted(formatDate(curr.time().toLocalDate()), curr.amount());
+                        return builder.append(text);
+                    }, StringBuilder::append)
+                .toString();
+            sendMessage(getChatId(update), message, null, null);
+        } else {
+            logger.warn("Unrecognized callback: {}", callbackQuery.getData());
         }
     }
 
-    private void sendMessage(String chatId, String text, @Nullable Integer replyToMessageId) {
+    private void sendSuccessfullySavedTransaction(
+        Long chatId,
+        Long userId,
+        Integer messageId,
+        String category
+    ) {
+        Statistics statistics = statisticsService.getMonthlyStatistics(userId, category);
+        String reply = "Saved%nTotal spend in this month: %.1f%nIn this category: %.1f"
+            .formatted(statistics.total(), statistics.totalInCategory());
+        sendMessage(chatId, reply, messageId, null);
+    }
+
+    private void sendMessage(
+        Long chatId,
+        String text,
+        @Nullable Integer replyToMessageId,
+        @Nullable ReplyKeyboard replyKeyboard
+    ) {
         try {
             SendMessage sendMessage = SendMessage.builder()
                 .chatId(chatId)
                 .text(text)
                 .replyToMessageId(replyToMessageId)
+                .replyMarkup(replyKeyboard)
                 .build();
             this.execute(sendMessage);
         } catch (TelegramApiException ex) {
@@ -114,11 +209,22 @@ public class FinancieTelegramBot extends TelegramLongPollingBot {
         }
     }
 
+    private String toJsonFormat(Map<String, String> values) {
+        JsonObject jsonObject = new JsonObject();
+        values.forEach(jsonObject::addProperty);
+        return jsonObject.toString();
+    }
 
-    private String getChatId(Update update) {
-        return Optional.ofNullable(update.getMessage())
-            .map(Message::getChatId)
-            .map(Object::toString)
-            .orElse(null);
+    private InlineKeyboardButton inlineButton(String text, String callbackData) {
+        return InlineKeyboardButton.builder()
+            .text(text)
+            .callbackData(callbackData)
+            .build();
+    }
+
+    private KeyboardButton button(String text) {
+        return KeyboardButton.builder()
+            .text(text)
+            .build();
     }
 }

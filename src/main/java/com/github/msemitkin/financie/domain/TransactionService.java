@@ -9,6 +9,8 @@ import com.github.msemitkin.financie.persistence.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -45,5 +47,20 @@ public class TransactionService {
         Long categoryId = categoryRepository.getCategoryEntityByName(name);
         return Optional.ofNullable(categoryId)
             .orElseGet(() -> categoryRepository.save(new CategoryEntity(null, name)).getId());
+    }
+
+    public List<Transaction> getTransactions(long userId, LocalDateTime start, LocalDateTime end) {
+        List<TransactionEntity> transactions = transactionRepository.findAllByUserIdAndDateTimeBetween(userId, start, end);
+        List<Long> categoryIds = transactions.stream().map(TransactionEntity::getCategoryId).distinct().toList();
+        Map<Long, CategoryEntity> categories = categoryRepository.findAllByIds(categoryIds);
+        return transactions.stream()
+            .map(tran -> new Transaction(
+                tran.getId(),
+                tran.getUserId(),
+                tran.getAmount(),
+                categories.get(tran.getCategoryId()).getName(),
+                null,
+                tran.getDateTime()))
+            .toList();
     }
 }

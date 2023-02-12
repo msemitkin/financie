@@ -17,6 +17,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
+    implementation("com.google.code.gson:gson:2.10.1")
+
     implementation("org.telegram:telegrambots-spring-boot-starter:6.5.0")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
