@@ -1,5 +1,6 @@
 package com.github.msemitkin.financie.persistence.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,12 +13,18 @@ import java.time.LocalDateTime;
 @Table(name = "transaction")
 public class TransactionEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
+    @Column(name = "user_id")
     private Long userId;
+    @Column(name = "amount")
     private Double amount;
+    @Column(name = "category_id")
     private Long categoryId;
+    @Column(name = "description")
     private String description;
+    @Column(name = "date_time")
     private LocalDateTime dateTime;
 
     public TransactionEntity() {
