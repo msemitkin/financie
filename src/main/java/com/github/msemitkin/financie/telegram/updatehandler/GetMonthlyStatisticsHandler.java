@@ -8,7 +8,6 @@ import com.github.msemitkin.financie.telegram.command.BotCommand;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
@@ -17,7 +16,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
 import static com.github.msemitkin.financie.telegram.util.JsonUtil.toJson;
@@ -26,7 +24,7 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTe
 import static java.util.Objects.requireNonNull;
 
 @Component
-public class GetMonthlyStatisticsHandler implements UpdateHandler {
+public class GetMonthlyStatisticsHandler extends AbstractTextCommandHandler {
     private final TelegramApi telegramApi;
     private final TransactionService transactionService;
     private final StatisticsService statisticsService;
@@ -36,17 +34,10 @@ public class GetMonthlyStatisticsHandler implements UpdateHandler {
         TransactionService transactionService,
         StatisticsService statisticsService
     ) {
+        super(BotCommand.MONTHLY_STATISTICS.getCommand());
         this.telegramApi = telegramApi;
         this.transactionService = transactionService;
         this.statisticsService = statisticsService;
-    }
-
-    @Override
-    public boolean canHandle(Update update) {
-        return Optional.ofNullable(update.getMessage())
-            .map(Message::getText)
-            .map(BotCommand.MONTHLY_STATISTICS.getCommand()::equals)
-            .orElse(false);
     }
 
     @Override

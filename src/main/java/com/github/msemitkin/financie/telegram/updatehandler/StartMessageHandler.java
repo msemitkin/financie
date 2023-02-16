@@ -4,31 +4,22 @@ import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import java.util.List;
-import java.util.Optional;
 
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 
 @Component
-public class StartMessageHandler implements UpdateHandler {
+public class StartMessageHandler extends AbstractTextCommandHandler {
     private final TelegramApi telegramApi;
 
     public StartMessageHandler(TelegramApi telegramApi) {
+        super(BotCommand.START.getCommand());
         this.telegramApi = telegramApi;
-    }
-
-    @Override
-    public boolean canHandle(Update update) {
-        return Optional.ofNullable(update.getMessage())
-            .map(Message::getText)
-            .map(BotCommand.START.getCommand()::equals)
-            .orElse(false);
     }
 
     @Override
@@ -48,7 +39,11 @@ public class StartMessageHandler implements UpdateHandler {
             .build();
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)
-            .text("Welcome")
+            .text("""
+                We're so happy to have you on board with Financie!
+                If you have any questions or feedback, please don't hesitate to reach out. \
+                Our friendly team is always here to help! \uD83D\uDE0A
+                """)
             .replyMarkup(markup)
             .build();
         telegramApi.execute(sendMessage);
