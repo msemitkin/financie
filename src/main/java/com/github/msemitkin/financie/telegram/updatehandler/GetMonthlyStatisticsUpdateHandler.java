@@ -75,7 +75,7 @@ public class GetMonthlyStatisticsUpdateHandler implements UpdateHandler {
             keyboardBuilder.keyboardRow(List.of(inlineButton(text, callbackData)));
         });
         InlineKeyboardMarkup keyboard = keyboardBuilder.build();
-        sendMessage(chatId, month.concat(" statistics"), null, keyboard);
+        sendMessage(chatId, "Transactions in ".concat(month), null, keyboard);
     }
 
     private void sendMessage(
