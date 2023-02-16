@@ -1,17 +1,14 @@
 package com.github.msemitkin.financie.telegram.updatehandler;
 
+import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
-import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import org.telegram.telegrambots.meta.bots.AbsSender;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,10 +17,10 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 
 @Component
 public class StartMessageHandler implements UpdateHandler {
-    private final AbsSender absSender;
+    private final TelegramApi telegramApi;
 
-    public StartMessageHandler(AbsSender absSender) {
-        this.absSender = absSender;
+    public StartMessageHandler(TelegramApi telegramApi) {
+        this.telegramApi = telegramApi;
     }
 
     @Override
@@ -40,7 +37,7 @@ public class StartMessageHandler implements UpdateHandler {
         sendWelcomeMessage(chatId);
     }
 
-    private void sendWelcomeMessage(Long chatIt) {
+    private void sendWelcomeMessage(Long chatId) {
         ReplyKeyboardMarkup markup = ReplyKeyboardMarkup.builder()
             .keyboardRow(new KeyboardRow(List.of(
                 KeyboardButton.builder()
@@ -49,25 +46,12 @@ public class StartMessageHandler implements UpdateHandler {
             )))
             .resizeKeyboard(true)
             .build();
-        sendMessage(chatIt, "Welcome", null, markup);
-    }
-
-    private void sendMessage(
-        Long chatId,
-        String text,
-        @Nullable Integer replyToMessageId,
-        @Nullable ReplyKeyboard replyKeyboard
-    ) {
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)
-            .text(text)
-            .replyToMessageId(replyToMessageId)
-            .replyMarkup(replyKeyboard)
+            .text("Welcome")
+            .replyMarkup(markup)
             .build();
-        try {
-            absSender.execute(sendMessage);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        }
+        telegramApi.execute(sendMessage);
     }
+
 }

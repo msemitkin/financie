@@ -3,6 +3,7 @@ package com.github.msemitkin.financie.telegram.updatehandler;
 import com.github.msemitkin.financie.domain.CategoryStatistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.TransactionService;
+import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
@@ -12,8 +13,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.bots.AbsSender;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -27,17 +26,17 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTe
 import static java.util.Objects.requireNonNull;
 
 @Component
-public class GetMonthlyStatisticsUpdateHandler implements UpdateHandler {
-    private final AbsSender absSender;
+public class GetMonthlyStatisticsHandler implements UpdateHandler {
+    private final TelegramApi telegramApi;
     private final TransactionService transactionService;
     private final StatisticsService statisticsService;
 
-    public GetMonthlyStatisticsUpdateHandler(
-        AbsSender absSender,
+    public GetMonthlyStatisticsHandler(
+        TelegramApi telegramApi,
         TransactionService transactionService,
         StatisticsService statisticsService
     ) {
-        this.absSender = absSender;
+        this.telegramApi = telegramApi;
         this.transactionService = transactionService;
         this.statisticsService = statisticsService;
     }
@@ -61,7 +60,7 @@ public class GetMonthlyStatisticsUpdateHandler implements UpdateHandler {
 
         if (statistics.isEmpty()) {
             String text = "No transactions in " + month;
-            sendMessage(chatId, text, null, null);
+            sendMessage(chatId, text, null);
             return;
         }
 
@@ -75,26 +74,20 @@ public class GetMonthlyStatisticsUpdateHandler implements UpdateHandler {
             keyboardBuilder.keyboardRow(List.of(inlineButton(text, callbackData)));
         });
         InlineKeyboardMarkup keyboard = keyboardBuilder.build();
-        sendMessage(chatId, "Transactions in ".concat(month), null, keyboard);
+        sendMessage(chatId, "Transactions in ".concat(month), keyboard);
     }
 
     private void sendMessage(
         Long chatId,
         String text,
-        @Nullable Integer replyToMessageId,
         @Nullable ReplyKeyboard replyKeyboard
     ) {
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)
             .text(text)
-            .replyToMessageId(replyToMessageId)
             .replyMarkup(replyKeyboard)
             .build();
-        try {
-            absSender.execute(sendMessage);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        }
+        telegramApi.execute(sendMessage);
     }
 
     private InlineKeyboardButton inlineButton(String text, String callbackData) {

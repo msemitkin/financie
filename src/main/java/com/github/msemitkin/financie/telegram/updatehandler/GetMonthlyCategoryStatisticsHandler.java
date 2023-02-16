@@ -3,6 +3,7 @@ package com.github.msemitkin.financie.telegram.updatehandler;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.Transaction;
 import com.github.msemitkin.financie.domain.TransactionService;
+import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import jakarta.annotation.Nullable;
@@ -12,8 +13,6 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.bots.AbsSender;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -29,18 +28,19 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTe
 import static java.util.Objects.requireNonNull;
 
 @Component
-public class GetMonthlyCategoryStatisticsUpdateHandler implements UpdateHandler {
-    private final AbsSender absSender;
+public class GetMonthlyCategoryStatisticsHandler implements UpdateHandler {
     private final TransactionService transactionService;
     private final StatisticsService statisticsService;
+    private final TelegramApi telegramApi;
 
-    public GetMonthlyCategoryStatisticsUpdateHandler(
-        AbsSender absSender, TransactionService transactionService,
-        StatisticsService statisticsService
+    public GetMonthlyCategoryStatisticsHandler(
+        TransactionService transactionService,
+        StatisticsService statisticsService,
+        TelegramApi telegramApi
     ) {
-        this.absSender = absSender;
         this.transactionService = transactionService;
         this.statisticsService = statisticsService;
+        this.telegramApi = telegramApi;
     }
 
     @Override
@@ -96,10 +96,6 @@ public class GetMonthlyCategoryStatisticsUpdateHandler implements UpdateHandler 
             .text(text)
             .replyMarkup(replyKeyboard)
             .build();
-        try {
-            absSender.execute(editMessage);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        }
+        telegramApi.execute(editMessage);
     }
 }

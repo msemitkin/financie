@@ -1,6 +1,7 @@
 package com.github.msemitkin.financie.telegram.updatehandler;
 
 import com.github.msemitkin.financie.domain.TransactionService;
+import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.springframework.stereotype.Component;
@@ -9,8 +10,6 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.bots.AbsSender;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
 import java.util.Map;
@@ -21,12 +20,12 @@ import static com.github.msemitkin.financie.telegram.util.TransactionUtil.getTra
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 
 @Component
-public class GetTransactionActionsMenuUpdateHandler implements UpdateHandler {
-    private final AbsSender absSender;
+public class GetTransactionActionsMenuHandler implements UpdateHandler {
+    private final TelegramApi telegramApi;
     private final TransactionService transactionService;
 
-    public GetTransactionActionsMenuUpdateHandler(AbsSender absSender, TransactionService transactionService) {
-        this.absSender = absSender;
+    public GetTransactionActionsMenuHandler(TelegramApi telegramApi, TransactionService transactionService) {
+        this.telegramApi = telegramApi;
         this.transactionService = transactionService;
     }
 
@@ -64,10 +63,6 @@ public class GetTransactionActionsMenuUpdateHandler implements UpdateHandler {
             .text(text)
             .replyMarkup(inlineKeyboardMarkup)
             .build();
-        try {
-            absSender.execute(editMessageText);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        }
+        telegramApi.execute(editMessageText);
     }
 }

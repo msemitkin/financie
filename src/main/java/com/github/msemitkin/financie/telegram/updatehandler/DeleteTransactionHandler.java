@@ -2,6 +2,7 @@ package com.github.msemitkin.financie.telegram.updatehandler;
 
 import com.github.msemitkin.financie.domain.Transaction;
 import com.github.msemitkin.financie.domain.TransactionService;
+import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.springframework.stereotype.Component;
@@ -9,8 +10,6 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageTe
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.bots.AbsSender;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.Optional;
 
@@ -19,13 +18,13 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static java.util.Collections.emptyList;
 
 @Component
-public class DeleteTransactionUpdateHandler implements UpdateHandler {
+public class DeleteTransactionHandler implements UpdateHandler {
     private final TransactionService transactionService;
-    private final AbsSender absSender;
+    private final TelegramApi telegramApi;
 
-    public DeleteTransactionUpdateHandler(TransactionService transactionService, AbsSender absSender) {
+    public DeleteTransactionHandler(TransactionService transactionService, TelegramApi telegramApi) {
         this.transactionService = transactionService;
-        this.absSender = absSender;
+        this.telegramApi = telegramApi;
     }
 
     @Override
@@ -53,10 +52,6 @@ public class DeleteTransactionUpdateHandler implements UpdateHandler {
             .text("Deleted transaction%n%s".formatted(getTransactionRepresentation(transaction)))
             .replyMarkup(InlineKeyboardMarkup.builder().keyboard(emptyList()).build())
             .build();
-        try {
-            absSender.execute(editMessageText);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        }
+        telegramApi.execute(editMessageText);
     }
 }

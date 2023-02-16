@@ -5,6 +5,7 @@ import com.github.msemitkin.financie.domain.Statistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.telegram.MessageException;
+import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.transaction.IncomingTransaction;
 import com.github.msemitkin.financie.telegram.transaction.TransactionParser;
 import com.github.msemitkin.financie.telegram.transaction.TransactionRecognizer;
@@ -15,8 +16,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
-import org.telegram.telegrambots.meta.bots.AbsSender;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.Optional;
 
@@ -25,23 +24,23 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTe
 import static java.util.Objects.requireNonNull;
 
 @Component
-public class SaveTransactionUpdateHandler implements UpdateHandler {
-    private final AbsSender absSender;
+public class SaveTransactionHandler implements UpdateHandler {
+    private final TelegramApi telegramApi;
     private final TransactionRecognizer transactionRecognizer;
     private final TransactionValidator transactionValidator;
     private final TransactionParser transactionParser;
     private final TransactionService transactionService;
     private final StatisticsService statisticsService;
 
-    public SaveTransactionUpdateHandler(
-        AbsSender absSender,
+    public SaveTransactionHandler(
+        TelegramApi telegramApi,
         TransactionRecognizer transactionRecognizer,
         TransactionValidator transactionValidator,
         TransactionParser transactionParser,
         TransactionService transactionService,
         StatisticsService statisticsService
     ) {
-        this.absSender = absSender;
+        this.telegramApi = telegramApi;
         this.transactionRecognizer = transactionRecognizer;
         this.transactionValidator = transactionValidator;
         this.transactionParser = transactionParser;
@@ -103,10 +102,6 @@ public class SaveTransactionUpdateHandler implements UpdateHandler {
             .replyToMessageId(replyToMessageId)
             .replyMarkup(replyKeyboard)
             .build();
-        try {
-            absSender.execute(sendMessage);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        }
+        telegramApi.execute(sendMessage);
     }
 }
