@@ -62,6 +62,10 @@ public class TransactionService {
             .orElseThrow();
     }
 
+    public void deleteTransaction(long transactionId) {
+        transactionRepository.deleteById(transactionId);
+    }
+
     public List<Transaction> getTransactions(long userId, LocalDateTime start, LocalDateTime end) {
         List<TransactionEntity> transactions = transactionRepository.findAllByUserIdAndDateTimeBetween(userId, start, end);
         List<Long> categoryIds = transactions.stream().map(TransactionEntity::getCategoryId).distinct().toList();
