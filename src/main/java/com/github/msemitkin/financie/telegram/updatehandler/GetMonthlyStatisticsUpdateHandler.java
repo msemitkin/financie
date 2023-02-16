@@ -4,7 +4,6 @@ import com.github.msemitkin.financie.domain.CategoryStatistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
-import com.google.gson.JsonObject;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -22,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
+import static com.github.msemitkin.financie.telegram.util.JsonUtil.toJson;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 import static java.util.Objects.requireNonNull;
@@ -68,7 +68,7 @@ public class GetMonthlyStatisticsUpdateHandler implements UpdateHandler {
         InlineKeyboardMarkup.InlineKeyboardMarkupBuilder keyboardBuilder = InlineKeyboardMarkup.builder();
         statistics.forEach(stats -> {
             String text = "%.1f: %s".formatted(stats.amount(), stats.category());
-            String callbackData = toJsonFormat(Map.of(
+            String callbackData = toJson(Map.of(
                 "type", "monthly_stats",
                 "category", stats.category()
             ));
@@ -95,12 +95,6 @@ public class GetMonthlyStatisticsUpdateHandler implements UpdateHandler {
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private String toJsonFormat(Map<String, String> values) {
-        JsonObject jsonObject = new JsonObject();
-        values.forEach(jsonObject::addProperty);
-        return jsonObject.toString();
     }
 
     private InlineKeyboardButton inlineButton(String text, String callbackData) {

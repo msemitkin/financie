@@ -18,10 +18,12 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatDate;
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
+import static com.github.msemitkin.financie.telegram.util.JsonUtil.toJson;
+import static com.github.msemitkin.financie.telegram.util.TransactionUtil.getTransactionRepresentation;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 import static java.util.Objects.requireNonNull;
@@ -73,18 +75,13 @@ public class GetMonthlyCategoryStatisticsUpdateHandler implements UpdateHandler 
         List<List<InlineKeyboardButton>> rows = transactionsInCategory.stream()
             .map(transaction -> InlineKeyboardButton.builder()
                 .text(getTransactionRepresentation(transaction))
-                //TODO add callback to show actions menu
-                .callbackData("   ")
+                .callbackData(toJson(Map.of("type", "transactions/actions", "transactionId", transaction.id())))
                 .build())
             .map(List::of)
             .toList();
         return InlineKeyboardMarkup.builder()
             .keyboard(rows)
             .build();
-    }
-
-    private String getTransactionRepresentation(Transaction transaction) {
-        return "%n%s : %.1f".formatted(formatDate(transaction.time().toLocalDate()), transaction.amount());
     }
 
     private void editMessage(

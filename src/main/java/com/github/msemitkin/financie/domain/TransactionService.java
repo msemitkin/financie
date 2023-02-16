@@ -43,10 +43,23 @@ public class TransactionService {
         transactionRepository.save(transaction);
     }
 
-    long getOrCreateCategoryId(String name) {
-        Long categoryId = categoryRepository.getCategoryEntityByName(name);
-        return Optional.ofNullable(categoryId)
-            .orElseGet(() -> categoryRepository.save(new CategoryEntity(null, name)).getId());
+    public Transaction getTransaction(long id) {
+        return transactionRepository.findById(id)
+            .map(tran -> {
+                Long categoryId = tran.getCategoryId();
+                String categoryName = categoryRepository.findById(categoryId)
+                    .map(CategoryEntity::getName)
+                    .orElse(null);
+                return new Transaction(
+                    tran.getId(),
+                    tran.getUserId(),
+                    tran.getAmount(),
+                    categoryName,
+                    tran.getDescription(),
+                    tran.getDateTime()
+                );
+            })
+            .orElseThrow();
     }
 
     public List<Transaction> getTransactions(long userId, LocalDateTime start, LocalDateTime end) {
@@ -62,5 +75,11 @@ public class TransactionService {
                 null,
                 tran.getDateTime()))
             .toList();
+    }
+
+    private long getOrCreateCategoryId(String name) {
+        Long categoryId = categoryRepository.getCategoryEntityByName(name);
+        return Optional.ofNullable(categoryId)
+            .orElseGet(() -> categoryRepository.save(new CategoryEntity(null, name)).getId());
     }
 }
