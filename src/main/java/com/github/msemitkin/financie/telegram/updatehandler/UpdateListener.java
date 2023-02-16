@@ -1,8 +1,6 @@
 package com.github.msemitkin.financie.telegram.updatehandler;
 
 import com.github.msemitkin.financie.telegram.UpdateReceivedEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -11,12 +9,12 @@ import java.util.List;
 
 @Component
 public class UpdateListener {
-    private static final Logger logger = LoggerFactory.getLogger(UpdateListener.class);
-
     private final List<UpdateHandler> updateHandlers;
+    private final DefaultUpdateHandler defaultUpdateHandler;
 
-    public UpdateListener(List<UpdateHandler> updateHandlers) {
+    public UpdateListener(List<UpdateHandler> updateHandlers, DefaultUpdateHandler defaultUpdateHandler) {
         this.updateHandlers = updateHandlers;
+        this.defaultUpdateHandler = defaultUpdateHandler;
     }
 
     @EventListener(UpdateReceivedEvent.class)
@@ -26,6 +24,6 @@ public class UpdateListener {
             .filter(updateHandler -> updateHandler.canHandle(update))
             .findFirst()
             .ifPresentOrElse(updateHandler -> updateHandler.handleUpdate(update),
-                () -> logger.warn("Unrecognized update: {}", update));
+                () -> defaultUpdateHandler.handleUpdate(update));
     }
 }
