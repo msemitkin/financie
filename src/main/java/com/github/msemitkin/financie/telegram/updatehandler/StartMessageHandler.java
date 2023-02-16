@@ -46,7 +46,9 @@ public class StartMessageHandler implements UpdateHandler {
                 KeyboardButton.builder()
                     .text(BotCommand.MONTHLY_STATISTICS.getCommand())
                     .build()
-            ))).build();
+            )))
+            .resizeKeyboard(true)
+            .build();
         sendMessage(chatIt, "Welcome", null, markup);
     }
 
