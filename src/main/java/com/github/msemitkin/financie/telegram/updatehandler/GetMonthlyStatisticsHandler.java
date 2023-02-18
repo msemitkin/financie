@@ -6,6 +6,7 @@ import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
 import jakarta.annotation.Nullable;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -28,16 +29,20 @@ public class GetMonthlyStatisticsHandler extends AbstractTextCommandHandler {
     private final TelegramApi telegramApi;
     private final TransactionService transactionService;
     private final StatisticsService statisticsService;
+    private final int maxNumberOfStatisticsRecords;
 
     public GetMonthlyStatisticsHandler(
         TelegramApi telegramApi,
         TransactionService transactionService,
-        StatisticsService statisticsService
+        StatisticsService statisticsService,
+        @Value("${com.github.msemitkin.financie.statistics.max-number-of-displayed-records}")
+        int maxNumberOfStatisticsRecords
     ) {
         super(BotCommand.MONTHLY_STATISTICS.getCommand());
         this.telegramApi = telegramApi;
         this.transactionService = transactionService;
         this.statisticsService = statisticsService;
+        this.maxNumberOfStatisticsRecords = maxNumberOfStatisticsRecords;
     }
 
     @Override
@@ -55,17 +60,26 @@ public class GetMonthlyStatisticsHandler extends AbstractTextCommandHandler {
             return;
         }
 
-        InlineKeyboardMarkup.InlineKeyboardMarkupBuilder keyboardBuilder = InlineKeyboardMarkup.builder();
-        statistics.forEach(stats -> {
-            String text = "%.1f: %s".formatted(stats.amount(), stats.category());
-            String callbackData = toJson(Map.of(
-                "type", "monthly_stats",
-                "category", stats.category()
-            ));
-            keyboardBuilder.keyboardRow(List.of(inlineButton(text, callbackData)));
-        });
-        InlineKeyboardMarkup keyboard = keyboardBuilder.build();
-        sendMessage(chatId, "Transactions in ".concat(month), keyboard);
+        InlineKeyboardMarkup keyboard = getKeyboard(statistics);
+        sendMessage(chatId, "Top categories in ".concat(month), keyboard);
+    }
+
+    private InlineKeyboardMarkup getKeyboard(List<CategoryStatistics> statistics) {
+        List<List<InlineKeyboardButton>> rows = statistics.stream()
+            .map(stats -> {
+                String text = "%.1f: %s".formatted(stats.amount(), stats.category());
+                String callbackData = toJson(Map.of(
+                    "type", "monthly_stats",
+                    "category", stats.category()
+                ));
+                return inlineButton(text, callbackData);
+            })
+            .map(List::of)
+            .limit(maxNumberOfStatisticsRecords)
+            .toList();
+        return InlineKeyboardMarkup.builder()
+            .keyboard(rows)
+            .build();
     }
 
     private void sendMessage(

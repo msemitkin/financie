@@ -7,6 +7,7 @@ import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import jakarta.annotation.Nullable;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -32,15 +33,19 @@ public class GetMonthlyCategoryStatisticsHandler implements UpdateHandler {
     private final TransactionService transactionService;
     private final StatisticsService statisticsService;
     private final TelegramApi telegramApi;
+    private final int maxNumberOfStatisticsRecords;
 
     public GetMonthlyCategoryStatisticsHandler(
         TransactionService transactionService,
         StatisticsService statisticsService,
-        TelegramApi telegramApi
+        TelegramApi telegramApi,
+        @Value("${com.github.msemitkin.financie.statistics.max-number-of-displayed-records}")
+        int maxNumberOfStatisticsRecords
     ) {
         this.transactionService = transactionService;
         this.statisticsService = statisticsService;
         this.telegramApi = telegramApi;
+        this.maxNumberOfStatisticsRecords = maxNumberOfStatisticsRecords;
     }
 
     @Override
@@ -66,7 +71,7 @@ public class GetMonthlyCategoryStatisticsHandler implements UpdateHandler {
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(transactionsInCategory);
         Month month = LocalDate.now().getMonth();
         String message = """
-            Transactions in %s
+            Top transactions in %s
             Category: %s""".formatted(formatMonth(month), category);
         editMessage(getChatId(update), messageId, message, keyboard);
     }
@@ -78,6 +83,7 @@ public class GetMonthlyCategoryStatisticsHandler implements UpdateHandler {
                 .callbackData(toJson(Map.of("type", "transactions/actions", "transactionId", transaction.id())))
                 .build())
             .map(List::of)
+            .limit(maxNumberOfStatisticsRecords)
             .toList();
         return InlineKeyboardMarkup.builder()
             .keyboard(rows)

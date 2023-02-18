@@ -25,7 +25,7 @@ public class AuthorHandler extends AbstractTextCommandHandler {
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)
             .text("""
-                Oopsie daisy! It looks like our team of highly trained monkeys forgot to add the author command.
+                Oopsie daisy! It looks like our team of highly trained monkeys forgot to add the information about the author.
                 Don't worry though, they're working on it right now and it'll be added soon.
                 Thanks for your patience and please don't feed the monkeys!
                 """

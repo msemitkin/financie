@@ -22,6 +22,8 @@ dependencies {
 
     implementation("org.telegram:telegrambots-spring-boot-starter:6.5.0")
 
+    implementation("com.opencsv:opencsv:5.7.1")
+
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
