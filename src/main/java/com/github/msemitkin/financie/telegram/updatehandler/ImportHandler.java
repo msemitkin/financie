@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.io.File;
 
+import static com.github.msemitkin.financie.telegram.command.BotCommand.IMPORT;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static java.util.Objects.requireNonNull;
 
@@ -22,7 +23,7 @@ public class ImportHandler extends AbstractTextCommandHandler {
         TelegramApi telegramApi,
         @Value("${com.github.msemitkin.financie.import-file-template-filename}") String fileName
     ) {
-        super("/import");
+        super(IMPORT.getCommand());
         this.telegramApi = telegramApi;
         this.template = new InputFile(new File(getClass().getClassLoader().getResource(fileName).getFile()), "template.csv");
     }
@@ -37,6 +38,8 @@ public class ImportHandler extends AbstractTextCommandHandler {
                 To import your transactions, simply upload a CSV file with the \
                 'amount', 'category', 'datetime' (in the 'yyyy-MM-dd HH:mm' format) columns  using the \
                 paperclip icon, and the bot will handle the rest!
+                                
+                Please, note that recording of savings is not supported yet.
                                 
                 Below is a template you can use
                 """)
