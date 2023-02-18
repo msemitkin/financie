@@ -14,7 +14,8 @@ public class TransactionValidator {
         if (saveTransactionCommand.category().length() > 64 || saveTransactionCommand.category().isEmpty()) {
             throw new TransactionValidationException("Category is invalid");
         }
-        if (saveTransactionCommand.dateTime().isAfter(LocalDateTime.now())) {
+        if (saveTransactionCommand.dateTime() != null
+            && saveTransactionCommand.dateTime().isAfter(LocalDateTime.now())) {
             throw new TransactionValidationException("Transactions cannot be in future");
         }
     }

@@ -8,6 +8,7 @@ import com.github.msemitkin.financie.telegram.command.BotCommand;
 import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -60,8 +61,15 @@ public class GetMonthlyStatisticsHandler extends AbstractTextCommandHandler {
             return;
         }
 
+        Double total = statistics.stream().reduce(0.0, (result, stat) -> result + stat.amount(), Double::sum);
+
         InlineKeyboardMarkup keyboard = getKeyboard(statistics);
-        sendMessage(chatId, "Top categories in ".concat(month), keyboard);
+        String text = getText(total, month);
+        sendMessage(chatId, text, keyboard);
+    }
+
+    private String getText(double total, String month) {
+        return "Total spent in " + month + ": `" + total + "`\n" + "Top categories:";
     }
 
     private InlineKeyboardMarkup getKeyboard(List<CategoryStatistics> statistics) {
@@ -90,6 +98,7 @@ public class GetMonthlyStatisticsHandler extends AbstractTextCommandHandler {
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)
             .text(text)
+            .parseMode(ParseMode.MARKDOWNV2)
             .replyMarkup(replyKeyboard)
             .build();
         telegramApi.execute(sendMessage);
