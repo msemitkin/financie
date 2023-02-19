@@ -7,18 +7,20 @@ import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.telegram.MessageException;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.transaction.IncomingTransaction;
+import com.github.msemitkin.financie.telegram.transaction.TransactionCommandValidator;
 import com.github.msemitkin.financie.telegram.transaction.TransactionParser;
 import com.github.msemitkin.financie.telegram.transaction.TransactionRecognizer;
-import com.github.msemitkin.financie.telegram.transaction.TransactionCommandValidator;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
+import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 import static java.util.Objects.requireNonNull;
@@ -74,7 +76,7 @@ public class SaveTransactionHandler implements UpdateHandler {
 
             sendSuccessfullySavedTransaction(chatId, userId, messageId, incomingTransaction.category());
         } catch (MessageException e) {
-            sendMessage(chatId, e.getMessage(), messageId, null);
+            sendMessage(chatId, e.getMessage(), messageId);
         }
     }
 
@@ -84,23 +86,29 @@ public class SaveTransactionHandler implements UpdateHandler {
         Integer messageId,
         String category
     ) {
-        Statistics statistics = statisticsService.getMonthlyStatistics(userId, category);
-        String reply = "Saved%nTotal spend in this month: %.1f%nIn this category: %.1f"
-            .formatted(statistics.total(), statistics.totalInCategory());
-        sendMessage(chatId, reply, messageId, null);
+        Statistics dailyStatistics = statisticsService.getDailyStatistics(userId, category, LocalDate.now());
+        Statistics monthlyStatistics = statisticsService.getMonthlyStatistics(userId, category);
+        String reply = escapeMarkdownV2("""
+            Saved
+            _____
+                        
+            Today spent today: `%.1f`
+            This month: `%.1f`
+            In this category: `%.1f`
+            """.formatted(dailyStatistics.total(), monthlyStatistics.total(), monthlyStatistics.totalInCategory()));
+        sendMessage(chatId, reply, messageId);
     }
 
     private void sendMessage(
         Long chatId,
         String text,
-        @Nullable Integer replyToMessageId,
-        @Nullable ReplyKeyboard replyKeyboard
+        @Nullable Integer replyToMessageId
     ) {
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)
             .text(text)
+            .parseMode(ParseMode.MARKDOWNV2)
             .replyToMessageId(replyToMessageId)
-            .replyMarkup(replyKeyboard)
             .build();
         telegramApi.execute(sendMessage);
     }

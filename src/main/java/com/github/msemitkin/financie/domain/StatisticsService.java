@@ -6,6 +6,7 @@ import com.github.msemitkin.financie.persistence.repository.CategoryRepository;
 import com.github.msemitkin.financie.persistence.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -61,6 +62,15 @@ public class StatisticsService {
 
     }
 
+    public Statistics getDailyStatistics(long userId, String category, LocalDate date) {
+        Long categoryId = categoryRepository.getCategoryEntityByName(category);
+        LocalDateTime from = date.atStartOfDay();
+        LocalDateTime to = date.plusDays(1).atStartOfDay();
+        double totalInCategory = getTotalSpent(userId, categoryId, from, to);
+        double total = getTotalSpent(userId, from, to);
+        return new Statistics(total, totalInCategory);
+    }
+
     public List<Transaction> getMonthlyCategoryStatistics(long userId, String category) {
         LocalDateTime from = YearMonth.now().atDay(1).atTime(0, 0);
         LocalDateTime to = LocalDateTime.now();
@@ -79,7 +89,19 @@ public class StatisticsService {
             .toList();
     }
 
-    private static Transaction toTransaction(TransactionEntity tran, Map<Long, CategoryEntity> categories) {
+    private double getTotalSpent(long userId, long categoryId, LocalDateTime from, LocalDateTime to) {
+        List<TransactionEntity> transactions = transactionRepository
+            .findAllByUserIdAndCategoryIdAndDateTimeBetween(userId, categoryId, from, to);
+        return sum(transactions);
+    }
+
+    private double getTotalSpent(long userId, LocalDateTime from, LocalDateTime to) {
+        List<TransactionEntity> transactions = transactionRepository
+            .findAllByUserIdAndDateTimeBetween(userId, from, to);
+        return sum(transactions);
+    }
+
+    private Transaction toTransaction(TransactionEntity tran, Map<Long, CategoryEntity> categories) {
         return new Transaction(
             tran.getId(),
             tran.getUserId(),

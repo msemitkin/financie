@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -23,6 +24,7 @@ import java.util.Optional;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
 import static com.github.msemitkin.financie.telegram.util.JsonUtil.toJson;
+import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.TransactionUtil.getTransactionRepresentation;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
@@ -68,12 +70,21 @@ public class GetMonthlyCategoryStatisticsHandler implements UpdateHandler {
         List<Transaction> transactionsInCategory = statisticsService
             .getMonthlyCategoryStatistics(userId, category);
 
+        Double totalInCategory = transactionsInCategory.stream()
+            .reduce(0.0, (res, tran) -> res + tran.amount(), Double::sum);
+
+        String message = getMessage(category, totalInCategory);
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(transactionsInCategory);
-        Month month = LocalDate.now().getMonth();
-        String message = """
-            Top transactions in %s
-            Category: %s""".formatted(formatMonth(month), category);
         editMessage(getChatId(update), messageId, message, keyboard);
+    }
+
+    private static String getMessage(String category, Double totalInCategory) {
+        Month month = LocalDate.now().getMonth();
+        return escapeMarkdownV2("""
+            Top transactions in %s
+            *Category: %s*
+            Spent in the category: `%.1f`""".formatted(formatMonth(month), category, totalInCategory)
+        );
     }
 
     private InlineKeyboardMarkup getKeyboardMarkup(List<Transaction> transactionsInCategory) {
@@ -100,6 +111,7 @@ public class GetMonthlyCategoryStatisticsHandler implements UpdateHandler {
             .chatId(chatId)
             .messageId(messageId)
             .text(text)
+            .parseMode(ParseMode.MARKDOWNV2)
             .replyMarkup(replyKeyboard)
             .build();
         telegramApi.execute(editMessage);
