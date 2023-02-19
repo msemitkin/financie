@@ -1,14 +1,18 @@
 package com.github.msemitkin.financie.telegram.updatehandler;
 
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 import static com.github.msemitkin.financie.telegram.command.BotCommand.IMPORT;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
@@ -16,16 +20,24 @@ import static java.util.Objects.requireNonNull;
 
 @Component
 public class ImportHandler extends AbstractTextCommandHandler {
+    private static final Logger logger = LoggerFactory.getLogger(ImportHandler.class);
+
     private final TelegramApi telegramApi;
-    private final InputFile template;
+    private final ResourceLoader resourceLoader;
+    private final String templatePath;
+    private final String outputFileName;
 
     public ImportHandler(
         TelegramApi telegramApi,
-        @Value("${com.github.msemitkin.financie.import-file-template-filename}") String fileName
+        @Value("${com.github.msemitkin.financie.import.template-path}") String templatePath,
+        @Value("${com.github.msemitkin.financie.import.output-file-name}") String outputFileName,
+        ResourceLoader resourceLoader
     ) {
         super(IMPORT.getCommand());
         this.telegramApi = telegramApi;
-        this.template = new InputFile(new File(getClass().getClassLoader().getResource(fileName).getFile()), "template.csv");
+        this.resourceLoader = resourceLoader;
+        this.templatePath = templatePath;
+        this.outputFileName = outputFileName;
     }
 
     @Override
@@ -44,11 +56,15 @@ public class ImportHandler extends AbstractTextCommandHandler {
                 Below is a template you can use
                 """)
             .build());
+        try (InputStream is = resourceLoader.getResource(templatePath).getInputStream()) {
+            InputFile template = new InputFile(is, outputFileName);
 
-        SendDocument build = SendDocument.builder()
-            .chatId(chatId)
-            .document(template)
-            .build();
-        telegramApi.execute(build);
+            telegramApi.execute(SendDocument.builder()
+                .chatId(chatId)
+                .document(template)
+                .build());
+        } catch (IOException e) {
+            logger.error("Failed to load template");
+        }
     }
 }
