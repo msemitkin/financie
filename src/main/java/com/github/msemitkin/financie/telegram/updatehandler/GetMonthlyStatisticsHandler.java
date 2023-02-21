@@ -16,6 +16,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 
@@ -52,7 +54,7 @@ public class GetMonthlyStatisticsHandler extends AbstractTextCommandHandler {
         Long chatId = getChatId(update);
         long userId = transactionService.getOrCreateUserByTelegramId(userTelegramId);
         List<CategoryStatistics> statistics = statisticsService
-            .getMonthlyStatistics(userId);
+            .getStatistics(userId, YearMonth.now().atDay(1).atStartOfDay(), LocalDateTime.now());
         String month = formatMonth(LocalDate.now().getMonth());
 
         if (statistics.isEmpty()) {

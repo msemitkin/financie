@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -20,7 +19,6 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
 import static com.github.msemitkin.financie.telegram.util.JsonUtil.toJson;
@@ -31,7 +29,7 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTe
 import static java.util.Objects.requireNonNull;
 
 @Component
-public class GetMonthlyCategoryStatisticsHandler implements UpdateHandler {
+public class GetMonthlyCategoryStatisticsHandler extends AbstractQueryHandler {
     private final TransactionService transactionService;
     private final StatisticsService statisticsService;
     private final TelegramApi telegramApi;
@@ -44,20 +42,11 @@ public class GetMonthlyCategoryStatisticsHandler implements UpdateHandler {
         @Value("${com.github.msemitkin.financie.statistics.max-number-of-displayed-records}")
         int maxNumberOfStatisticsRecords
     ) {
+        super("monthly_stats");
         this.transactionService = transactionService;
         this.statisticsService = statisticsService;
         this.telegramApi = telegramApi;
         this.maxNumberOfStatisticsRecords = maxNumberOfStatisticsRecords;
-    }
-
-    @Override
-    public boolean canHandle(Update update) {
-        return Optional.ofNullable(update.getCallbackQuery())
-            .map(CallbackQuery::getData)
-            .map(callbackData -> new Gson().fromJson(callbackData, JsonObject.class))
-            .map(json -> json.get("type").getAsString())
-            .map("monthly_stats"::equals)
-            .orElse(false);
     }
 
     @Override
