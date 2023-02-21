@@ -15,7 +15,7 @@ public abstract class AbstractTextCommandHandler implements UpdateHandler {
     }
 
     @Override
-    public boolean canHandle(Update update) {
+    public final boolean canHandle(Update update) {
         return Optional.ofNullable(update.getMessage())
             .map(Message::getText)
             .map(command::equals)

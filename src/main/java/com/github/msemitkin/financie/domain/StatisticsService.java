@@ -2,6 +2,7 @@ package com.github.msemitkin.financie.domain;
 
 import com.github.msemitkin.financie.persistence.entity.CategoryEntity;
 import com.github.msemitkin.financie.persistence.entity.TransactionEntity;
+import com.github.msemitkin.financie.persistence.mapper.TransactionMapper;
 import com.github.msemitkin.financie.persistence.repository.CategoryRepository;
 import com.github.msemitkin.financie.persistence.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
@@ -29,9 +30,7 @@ public class StatisticsService {
         this.categoryRepository = categoryRepository;
     }
 
-    public List<CategoryStatistics> getMonthlyStatistics(long userId) {
-        LocalDateTime from = YearMonth.now().atDay(1).atTime(0, 0);
-        LocalDateTime to = LocalDateTime.now();
+    public List<CategoryStatistics> getStatistics(long userId, LocalDateTime from, LocalDateTime to) {
         List<TransactionEntity> transactions = transactionRepository
             .findAllByUserIdAndDateTimeBetween(userId, from, to);
         Map<Long, List<TransactionEntity>> transactionsByCategoryId = transactions.stream()
@@ -50,9 +49,7 @@ public class StatisticsService {
             .toList();
     }
 
-    public Statistics getMonthlyStatistics(long userId, String category) {
-        LocalDateTime from = YearMonth.now().atDay(1).atTime(0, 0);
-        LocalDateTime to = LocalDateTime.now();
+    public Statistics getStatistics(long userId, String category, LocalDateTime from, LocalDateTime to) {
         Long categoryId = categoryRepository.getCategoryEntityByName(category);
         List<TransactionEntity> allTransactions = transactionRepository
             .findAllByUserIdAndDateTimeBetween(userId, from, to);
@@ -77,14 +74,8 @@ public class StatisticsService {
         Long categoryId = categoryRepository.getCategoryEntityByName(category);
         List<TransactionEntity> transactionsInCategory = transactionRepository
             .findAllByUserIdAndCategoryIdAndDateTimeBetween(userId, categoryId, from, to);
-        List<Long> categoryIds = transactionsInCategory.stream()
-            .map(TransactionEntity::getCategoryId)
-            .distinct()
-            .toList();
-        Map<Long, CategoryEntity> categories = categoryRepository
-            .findAllByIds(categoryIds);
         return transactionsInCategory.stream()
-            .map(tran -> toTransaction(tran, categories))
+            .map(tran -> TransactionMapper.toTransaction(tran, category))
             .sorted(Comparator.comparingDouble(Transaction::amount).reversed())
             .toList();
     }
@@ -99,17 +90,6 @@ public class StatisticsService {
         List<TransactionEntity> transactions = transactionRepository
             .findAllByUserIdAndDateTimeBetween(userId, from, to);
         return sum(transactions);
-    }
-
-    private Transaction toTransaction(TransactionEntity tran, Map<Long, CategoryEntity> categories) {
-        return new Transaction(
-            tran.getId(),
-            tran.getUserId(),
-            tran.getAmount(),
-            categories.get(tran.getCategoryId()).getName(),
-            tran.getDescription(),
-            tran.getDateTime()
-        );
     }
 
     private Double sum(Collection<TransactionEntity> transactions) {

@@ -31,9 +31,8 @@ public class StartMessageHandler extends AbstractTextCommandHandler {
     private void sendWelcomeMessage(Long chatId) {
         ReplyKeyboardMarkup markup = ReplyKeyboardMarkup.builder()
             .keyboardRow(new KeyboardRow(List.of(
-                KeyboardButton.builder()
-                    .text(BotCommand.MONTHLY_STATISTICS.getCommand())
-                    .build()
+                KeyboardButton.builder().text(BotCommand.TODAY.getCommand()).build(),
+                KeyboardButton.builder().text(BotCommand.MONTHLY_STATISTICS.getCommand()).build()
             )))
             .resizeKeyboard(true)
             .build();

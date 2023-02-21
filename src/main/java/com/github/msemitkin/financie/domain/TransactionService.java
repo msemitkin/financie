@@ -3,6 +3,7 @@ package com.github.msemitkin.financie.domain;
 import com.github.msemitkin.financie.persistence.entity.CategoryEntity;
 import com.github.msemitkin.financie.persistence.entity.TransactionEntity;
 import com.github.msemitkin.financie.persistence.entity.UserEntity;
+import com.github.msemitkin.financie.persistence.mapper.TransactionMapper;
 import com.github.msemitkin.financie.persistence.repository.CategoryRepository;
 import com.github.msemitkin.financie.persistence.repository.TransactionRepository;
 import com.github.msemitkin.financie.persistence.repository.UserRepository;
@@ -73,6 +74,19 @@ public class TransactionService {
                 );
             })
             .orElseThrow();
+    }
+
+    public List<Transaction> getTransactions(
+        long userId,
+        String category,
+        LocalDateTime from,
+        LocalDateTime to
+    ) {
+        Long categoryId = categoryRepository.getCategoryEntityByName(category);
+        List<TransactionEntity> transactions = transactionRepository
+            .findAllByUserIdAndCategoryIdAndDateTimeBetween(userId, categoryId, from, to);
+
+        return transactions.stream().map(tran -> TransactionMapper.toTransaction(tran, category)).toList();
     }
 
     public void deleteTransaction(long transactionId) {

@@ -18,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
@@ -87,11 +88,11 @@ public class SaveTransactionHandler implements UpdateHandler {
         String category
     ) {
         Statistics dailyStatistics = statisticsService.getDailyStatistics(userId, category, LocalDate.now());
-        Statistics monthlyStatistics = statisticsService.getMonthlyStatistics(userId, category);
+        Statistics monthlyStatistics = statisticsService
+            .getStatistics(userId, category, LocalDate.now().atStartOfDay(), LocalDateTime.now());
         String reply = escapeMarkdownV2("""
             Saved
-            _____
-                        
+            –––––
             Today spent today: `%.1f`
             This month: `%.1f`
             In this category: `%.1f`

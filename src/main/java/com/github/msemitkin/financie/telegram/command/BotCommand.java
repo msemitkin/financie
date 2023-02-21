@@ -5,7 +5,8 @@ public enum BotCommand {
     HELP("/help"),
     IMPORT("/import"),
     AUTHOR("/author"),
-    MONTHLY_STATISTICS("Monthly statistics");
+    MONTHLY_STATISTICS("This month"),
+    TODAY("Today");
 
     private final String command;
 

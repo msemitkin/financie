@@ -6,37 +6,26 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.github.msemitkin.financie.telegram.util.JsonUtil.toJson;
 import static com.github.msemitkin.financie.telegram.util.TransactionUtil.getTransactionRepresentation;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 
 @Component
-public class GetTransactionActionsMenuHandler implements UpdateHandler {
+public class GetTransactionActionsMenuHandler extends AbstractQueryHandler {
     private final TelegramApi telegramApi;
     private final TransactionService transactionService;
 
     public GetTransactionActionsMenuHandler(TelegramApi telegramApi, TransactionService transactionService) {
+        super("transactions/actions");
         this.telegramApi = telegramApi;
         this.transactionService = transactionService;
-    }
-
-    @Override
-    public boolean canHandle(Update update) {
-        return Optional.ofNullable(update.getCallbackQuery())
-            .map(CallbackQuery::getData)
-            .map(callbackData -> new Gson().fromJson(callbackData, JsonObject.class))
-            .map(json -> json.get("type").getAsString())
-            .map("transactions/actions"::equals)
-            .orElse(false);
     }
 
     @Override
