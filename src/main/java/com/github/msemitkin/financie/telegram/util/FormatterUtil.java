@@ -21,4 +21,13 @@ public class FormatterUtil {
     public static String formatMonth(@NonNull Month month) {
         return month.getDisplayName(TextStyle.FULL, Locale.getDefault());
     }
+
+    @NonNull
+    public static String formatNumber(double number) {
+        if (number == (long) number) {
+            return String.format("%d", (long) number);
+        } else {
+            return String.format("%.2f", number);
+        }
+    }
 }

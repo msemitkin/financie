@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.Optional;
 
+import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
@@ -94,10 +95,14 @@ public class SaveTransactionHandler implements UpdateHandler {
         String reply = escapeMarkdownV2("""
             Saved
             –––––
-            Today spent today: `%.1f`
-            This month: `%.1f`
-            In this category: `%.1f`
-            """.formatted(dailyStatistics.total(), monthlyStatistics.total(), monthlyStatistics.totalInCategory()));
+            Today spent today: `%s`
+            This month: `%s`
+            In this category: `%s`
+            """.formatted(
+            formatNumber(dailyStatistics.total()),
+            formatNumber(monthlyStatistics.total()),
+            formatNumber(monthlyStatistics.totalInCategory())
+        ));
         sendMessage(chatId, reply, messageId);
     }
 

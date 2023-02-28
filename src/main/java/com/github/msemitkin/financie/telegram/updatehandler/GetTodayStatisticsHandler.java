@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 import static java.util.Objects.requireNonNull;
@@ -57,7 +58,7 @@ public class GetTodayStatisticsHandler extends AbstractTextCommandHandler {
             List<List<InlineKeyboardButton>> rows = getKeyboard(statistics);
             telegramApi.execute(SendMessage.builder()
                 .chatId(chatId)
-                .text("Today: `%.1f`".formatted(total))
+                .text("Today: `%s`".formatted(formatNumber(total)))
                 .parseMode(ParseMode.MARKDOWNV2)
                 .replyMarkup(InlineKeyboardMarkup.builder().keyboard(rows).build())
                 .build());
@@ -67,7 +68,7 @@ public class GetTodayStatisticsHandler extends AbstractTextCommandHandler {
     private List<List<InlineKeyboardButton>> getKeyboard(List<CategoryStatistics> statistics) {
         return statistics.stream()
             .map(tran -> InlineKeyboardButton.builder()
-                .text("%s : %.1f".formatted(tran.category(), tran.amount()))
+                .text("%s : %s".formatted(tran.category(), formatNumber(tran.amount())))
                 .callbackData(JsonUtil.toJson(Map.of("type", "day_trans", "category", tran.category())))
                 .build())
             .map(List::of)

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
+import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.JsonUtil.toJson;
 import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.TransactionUtil.getTransactionRepresentation;
@@ -72,7 +73,7 @@ public class GetMonthlyCategoryStatisticsHandler extends AbstractQueryHandler {
         return escapeMarkdownV2("""
             Top transactions in %s
             *Category: %s*
-            Spent in the category: `%.1f`""".formatted(formatMonth(month), category, totalInCategory)
+            Spent in the category: `%s`""".formatted(formatMonth(month), category, formatNumber(totalInCategory))
         );
     }
 

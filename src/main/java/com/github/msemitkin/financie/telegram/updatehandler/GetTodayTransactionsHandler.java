@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 import static java.util.Objects.requireNonNull;
@@ -65,7 +66,7 @@ public class GetTodayTransactionsHandler extends AbstractQueryHandler {
             telegramApi.execute(EditMessageText.builder()
                 .chatId(chatId)
                 .messageId(messageId)
-                .text("Today in category *%s*: `%.1f`".formatted(category, total))
+                .text("Today in category *%s*: `%s`".formatted(category, formatNumber(total)))
                 .parseMode(ParseMode.MARKDOWNV2)
                 .replyMarkup(InlineKeyboardMarkup.builder().keyboard(rows).build())
                 .build());
@@ -77,7 +78,7 @@ public class GetTodayTransactionsHandler extends AbstractQueryHandler {
             .mapToObj(index -> {
                 Transaction tran = transactions.get(index);
                 return InlineKeyboardButton.builder()
-                    .text("%d. %s : %.1f".formatted(transactions.size() - index, tran.category(), tran.amount()))
+                    .text("%d. %s : %s".formatted(transactions.size() - index, tran.category(), formatNumber(tran.amount())))
                     .callbackData(JsonUtil.toJson(Map.of("type", "transactions/actions", "transactionId", tran.id())))
                     .build();
             })
