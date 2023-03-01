@@ -1,4 +1,4 @@
-package com.github.msemitkin.financie.telegram.updatehandler;
+package com.github.msemitkin.financie.telegram.updatehandler.transaction;
 
 import com.github.msemitkin.financie.domain.SaveTransactionCommand;
 import com.github.msemitkin.financie.domain.Statistics;
@@ -10,6 +10,7 @@ import com.github.msemitkin.financie.telegram.transaction.IncomingTransaction;
 import com.github.msemitkin.financie.telegram.transaction.TransactionCommandValidator;
 import com.github.msemitkin.financie.telegram.transaction.TransactionParser;
 import com.github.msemitkin.financie.telegram.transaction.TransactionRecognizer;
+import com.github.msemitkin.financie.telegram.updatehandler.UpdateHandler;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -19,8 +20,10 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.Optional;
 
+import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
@@ -89,14 +92,18 @@ public class SaveTransactionHandler implements UpdateHandler {
     ) {
         Statistics dailyStatistics = statisticsService.getDailyStatistics(userId, category, LocalDate.now());
         Statistics monthlyStatistics = statisticsService
-            .getStatistics(userId, category, LocalDate.now().atStartOfDay(), LocalDateTime.now());
+            .getStatistics(userId, category, YearMonth.now().atDay(1).atStartOfDay(), LocalDateTime.now());
         String reply = escapeMarkdownV2("""
             Saved
             –––––
-            Today spent today: `%.1f`
-            This month: `%.1f`
-            In this category: `%.1f`
-            """.formatted(dailyStatistics.total(), monthlyStatistics.total(), monthlyStatistics.totalInCategory()));
+            Today: `%s`
+            This month: `%s`
+            In this category: `%s`
+            """.formatted(
+            formatNumber(dailyStatistics.total()),
+            formatNumber(monthlyStatistics.total()),
+            formatNumber(monthlyStatistics.totalInCategory())
+        ));
         sendMessage(chatId, reply, messageId);
     }
 

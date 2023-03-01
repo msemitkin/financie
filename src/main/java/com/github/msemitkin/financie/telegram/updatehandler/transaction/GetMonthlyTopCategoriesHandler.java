@@ -1,10 +1,11 @@
-package com.github.msemitkin.financie.telegram.updatehandler;
+package com.github.msemitkin.financie.telegram.updatehandler.transaction;
 
 import com.github.msemitkin.financie.domain.CategoryStatistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
+import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
 import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -22,19 +23,20 @@ import java.util.List;
 import java.util.Map;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
+import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.JsonUtil.toJson;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 import static java.util.Objects.requireNonNull;
 
 @Component
-public class GetMonthlyStatisticsHandler extends AbstractTextCommandHandler {
+public class GetMonthlyTopCategoriesHandler extends AbstractTextCommandHandler {
     private final TelegramApi telegramApi;
     private final TransactionService transactionService;
     private final StatisticsService statisticsService;
     private final int maxNumberOfStatisticsRecords;
 
-    public GetMonthlyStatisticsHandler(
+    public GetMonthlyTopCategoriesHandler(
         TelegramApi telegramApi,
         TransactionService transactionService,
         StatisticsService statisticsService,
@@ -71,13 +73,15 @@ public class GetMonthlyStatisticsHandler extends AbstractTextCommandHandler {
     }
 
     private String getText(double total, String month) {
-        return "Total spent in " + month + ": `" + total + "`\n" + "Top categories:";
+        return """
+            Total spent in %s: `%s`
+            Top categories:""".formatted(month, formatNumber(total));
     }
 
     private InlineKeyboardMarkup getKeyboard(List<CategoryStatistics> statistics) {
         List<List<InlineKeyboardButton>> rows = statistics.stream()
             .map(stats -> {
-                String text = "%.1f: %s".formatted(stats.amount(), stats.category());
+                String text = "%s: %s".formatted(formatNumber(stats.amount()), stats.category());
                 String callbackData = toJson(Map.of(
                     "type", "monthly_stats",
                     "category", stats.category()

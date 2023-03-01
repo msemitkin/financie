@@ -35,6 +35,7 @@ public class TransactionService {
         this.transactionValidator = transactionValidator;
     }
 
+    @Deprecated
     public long getOrCreateUserByTelegramId(long telegramId) {
         UserEntity user = userRepository.getUserEntityByTelegramId(telegramId);
         return Optional.ofNullable(user)

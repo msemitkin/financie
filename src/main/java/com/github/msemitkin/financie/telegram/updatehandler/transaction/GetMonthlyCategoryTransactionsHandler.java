@@ -1,10 +1,10 @@
-package com.github.msemitkin.financie.telegram.updatehandler;
+package com.github.msemitkin.financie.telegram.updatehandler.transaction;
 
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.Transaction;
-import com.github.msemitkin.financie.domain.TransactionService;
+import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
-import com.google.gson.Gson;
+import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
 import com.google.gson.JsonObject;
 import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,29 +21,29 @@ import java.util.List;
 import java.util.Map;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
+import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.JsonUtil.toJson;
 import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.TransactionUtil.getTransactionRepresentation;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
-import static java.util.Objects.requireNonNull;
 
 @Component
-public class GetMonthlyCategoryStatisticsHandler extends AbstractQueryHandler {
-    private final TransactionService transactionService;
+public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler {
+    private final UserService userService;
     private final StatisticsService statisticsService;
     private final TelegramApi telegramApi;
     private final int maxNumberOfStatisticsRecords;
 
-    public GetMonthlyCategoryStatisticsHandler(
-        TransactionService transactionService,
+    public GetMonthlyCategoryTransactionsHandler(
+        UserService userService,
         StatisticsService statisticsService,
         TelegramApi telegramApi,
         @Value("${com.github.msemitkin.financie.statistics.max-number-of-displayed-records}")
         int maxNumberOfStatisticsRecords
     ) {
         super("monthly_stats");
-        this.transactionService = transactionService;
+        this.userService = userService;
         this.statisticsService = statisticsService;
         this.telegramApi = telegramApi;
         this.maxNumberOfStatisticsRecords = maxNumberOfStatisticsRecords;
@@ -51,11 +51,11 @@ public class GetMonthlyCategoryStatisticsHandler extends AbstractQueryHandler {
 
     @Override
     public void handleUpdate(Update update) {
-        JsonObject jsonObject = new Gson().fromJson(update.getCallbackQuery().getData(), JsonObject.class);
+        JsonObject jsonObject = getCallbackData(update);
         String category = jsonObject.get("category").getAsString();
         Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
-        Long telegramUserId = requireNonNull(getSenderTelegramId(update));
-        long userId = transactionService.getOrCreateUserByTelegramId(telegramUserId);
+        long telegramUserId = getSenderTelegramId(update);
+        long userId = userService.getOrCreateUserByTelegramId(telegramUserId);
         List<Transaction> transactionsInCategory = statisticsService
             .getMonthlyCategoryStatistics(userId, category);
 
@@ -72,7 +72,7 @@ public class GetMonthlyCategoryStatisticsHandler extends AbstractQueryHandler {
         return escapeMarkdownV2("""
             Top transactions in %s
             *Category: %s*
-            Spent in the category: `%.1f`""".formatted(formatMonth(month), category, totalInCategory)
+            Spent in the category: `%s`""".formatted(formatMonth(month), category, formatNumber(totalInCategory))
         );
     }
 
