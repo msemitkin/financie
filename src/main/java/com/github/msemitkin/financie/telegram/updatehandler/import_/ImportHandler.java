@@ -1,6 +1,7 @@
-package com.github.msemitkin.financie.telegram.updatehandler;
+package com.github.msemitkin.financie.telegram.updatehandler.import_;
 
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

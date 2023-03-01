@@ -1,11 +1,12 @@
-package com.github.msemitkin.financie.telegram.updatehandler;
+package com.github.msemitkin.financie.telegram.updatehandler.transaction;
 
 import com.github.msemitkin.financie.domain.Transaction;
 import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.domain.TransactionUtil;
+import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
 import com.github.msemitkin.financie.telegram.util.JsonUtil;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -25,25 +26,30 @@ import java.util.stream.IntStream;
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
-import static java.util.Objects.requireNonNull;
 
 @Component
 public class GetTodayTransactionsHandler extends AbstractQueryHandler {
     private final TransactionService transactionService;
+    private final UserService userService;
     private final TelegramApi telegramApi;
 
-    public GetTodayTransactionsHandler(TransactionService transactionService, TelegramApi telegramApi) {
+    public GetTodayTransactionsHandler(
+        TransactionService transactionService,
+        UserService userService,
+        TelegramApi telegramApi
+    ) {
         super("day_trans");
         this.transactionService = transactionService;
+        this.userService = userService;
         this.telegramApi = telegramApi;
     }
 
     @Override
     public void handleUpdate(Update update) {
-        long senderTelegramId = requireNonNull(getSenderTelegramId(update));
-        long userId = transactionService.getOrCreateUserByTelegramId(senderTelegramId);
-        long chatId = requireNonNull(getChatId(update));
-        JsonObject payload = new Gson().fromJson(update.getCallbackQuery().getData(), JsonObject.class);
+        long senderTelegramId = getSenderTelegramId(update);
+        long userId = userService.getOrCreateUserByTelegramId(senderTelegramId);
+        long chatId = getChatId(update);
+        JsonObject payload = getCallbackData(update);
         String category = payload.get("category").getAsString();
         List<Transaction> transactions = transactionService
             .getTransactions(userId, category, LocalDate.now().atStartOfDay(), LocalDateTime.now())

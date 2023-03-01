@@ -1,4 +1,4 @@
-package com.github.msemitkin.financie.telegram.updatehandler;
+package com.github.msemitkin.financie.telegram.updatehandler.transaction;
 
 import com.github.msemitkin.financie.domain.SaveTransactionCommand;
 import com.github.msemitkin.financie.domain.Statistics;
@@ -10,6 +10,7 @@ import com.github.msemitkin.financie.telegram.transaction.IncomingTransaction;
 import com.github.msemitkin.financie.telegram.transaction.TransactionCommandValidator;
 import com.github.msemitkin.financie.telegram.transaction.TransactionParser;
 import com.github.msemitkin.financie.telegram.transaction.TransactionRecognizer;
+import com.github.msemitkin.financie.telegram.updatehandler.UpdateHandler;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -95,7 +96,7 @@ public class SaveTransactionHandler implements UpdateHandler {
         String reply = escapeMarkdownV2("""
             Saved
             –––––
-            Today spent today: `%s`
+            Today: `%s`
             This month: `%s`
             In this category: `%s`
             """.formatted(
