@@ -1,8 +1,8 @@
-package com.github.msemitkin.financie.telegram.updatehandler;
+package com.github.msemitkin.financie.telegram.updatehandler.transaction;
 
 import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
-import com.google.gson.Gson;
+import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
 import com.google.gson.JsonObject;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
@@ -32,7 +32,7 @@ public class GetTransactionActionsMenuHandler extends AbstractQueryHandler {
     public void handleUpdate(Update update) {
         Long chatId = getChatId(update);
         Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
-        JsonObject callbackJson = new Gson().fromJson(update.getCallbackQuery().getData(), JsonObject.class);
+        JsonObject callbackJson = getCallbackData(update);
         long transactionId = callbackJson.get("transactionId").getAsLong();
 
         InlineKeyboardButton inlineKeyboardButton = InlineKeyboardButton.builder()

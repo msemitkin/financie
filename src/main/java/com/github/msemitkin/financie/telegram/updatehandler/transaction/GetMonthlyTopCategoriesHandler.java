@@ -1,10 +1,11 @@
-package com.github.msemitkin.financie.telegram.updatehandler;
+package com.github.msemitkin.financie.telegram.updatehandler.transaction;
 
 import com.github.msemitkin.financie.domain.CategoryStatistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
+import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
 import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -29,13 +30,13 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTe
 import static java.util.Objects.requireNonNull;
 
 @Component
-public class GetMonthlyStatisticsHandler extends AbstractTextCommandHandler {
+public class GetMonthlyTopCategoriesHandler extends AbstractTextCommandHandler {
     private final TelegramApi telegramApi;
     private final TransactionService transactionService;
     private final StatisticsService statisticsService;
     private final int maxNumberOfStatisticsRecords;
 
-    public GetMonthlyStatisticsHandler(
+    public GetMonthlyTopCategoriesHandler(
         TelegramApi telegramApi,
         TransactionService transactionService,
         StatisticsService statisticsService,
