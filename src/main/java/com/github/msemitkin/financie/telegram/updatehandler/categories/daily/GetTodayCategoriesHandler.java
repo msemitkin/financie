@@ -1,8 +1,9 @@
-package com.github.msemitkin.financie.telegram.updatehandler.categories;
+package com.github.msemitkin.financie.telegram.updatehandler.categories.daily;
 
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.categories.Response;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;

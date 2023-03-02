@@ -2,14 +2,12 @@ package com.github.msemitkin.financie.domain;
 
 import com.github.msemitkin.financie.persistence.entity.CategoryEntity;
 import com.github.msemitkin.financie.persistence.entity.TransactionEntity;
-import com.github.msemitkin.financie.persistence.mapper.TransactionMapper;
 import com.github.msemitkin.financie.persistence.repository.CategoryRepository;
 import com.github.msemitkin.financie.persistence.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -66,18 +64,6 @@ public class StatisticsService {
         double totalInCategory = getTotalSpent(userId, categoryId, from, to);
         double total = getTotalSpent(userId, from, to);
         return new Statistics(total, totalInCategory);
-    }
-
-    public List<Transaction> getMonthlyCategoryStatistics(long userId, String category) {
-        LocalDateTime from = YearMonth.now().atDay(1).atTime(0, 0);
-        LocalDateTime to = LocalDateTime.now();
-        Long categoryId = categoryRepository.getCategoryEntityByName(category);
-        List<TransactionEntity> transactionsInCategory = transactionRepository
-            .findAllByUserIdAndCategoryIdAndDateTimeBetween(userId, categoryId, from, to);
-        return transactionsInCategory.stream()
-            .map(tran -> TransactionMapper.toTransaction(tran, category))
-            .sorted(Comparator.comparingDouble(Transaction::amount).reversed())
-            .toList();
     }
 
     private double getTotalSpent(long userId, long categoryId, LocalDateTime from, LocalDateTime to) {

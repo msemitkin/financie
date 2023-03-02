@@ -28,12 +28,12 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 
 @Component
-public class GetTodayTransactionsHandler extends AbstractQueryHandler {
+public class GetDailyTransactionsHandler extends AbstractQueryHandler {
     private final TransactionService transactionService;
     private final UserService userService;
     private final TelegramApi telegramApi;
 
-    public GetTodayTransactionsHandler(
+    public GetDailyTransactionsHandler(
         TransactionService transactionService,
         UserService userService,
         TelegramApi telegramApi
@@ -51,8 +51,11 @@ public class GetTodayTransactionsHandler extends AbstractQueryHandler {
         long chatId = getChatId(update);
         JsonObject payload = getCallbackData(update);
         String category = payload.get("category").getAsString();
+        int offset = payload.get("offset").getAsInt();
+        LocalDateTime startOfDay = LocalDate.now().plusDays(offset).atStartOfDay();
+        LocalDateTime startOfNextDay = startOfDay.plusDays(1);
         List<Transaction> transactions = transactionService
-            .getTransactions(userId, category, LocalDate.now().atStartOfDay(), LocalDateTime.now())
+            .getTransactions(userId, category, startOfDay, startOfNextDay)
             .stream()
             .sorted(Comparator.comparing(Transaction::time).reversed())
             .toList();

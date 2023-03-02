@@ -1,7 +1,7 @@
 package com.github.msemitkin.financie.telegram.updatehandler.transaction;
 
-import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.Transaction;
+import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
@@ -16,7 +16,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 
@@ -31,20 +33,20 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTe
 @Component
 public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler {
     private final UserService userService;
-    private final StatisticsService statisticsService;
+    private final TransactionService transactionService;
     private final TelegramApi telegramApi;
     private final int maxNumberOfStatisticsRecords;
 
     public GetMonthlyCategoryTransactionsHandler(
         UserService userService,
-        StatisticsService statisticsService,
+        TransactionService transactionService,
         TelegramApi telegramApi,
         @Value("${com.github.msemitkin.financie.statistics.max-number-of-displayed-records}")
         int maxNumberOfStatisticsRecords
     ) {
         super("monthly_stats");
         this.userService = userService;
-        this.statisticsService = statisticsService;
+        this.transactionService = transactionService;
         this.telegramApi = telegramApi;
         this.maxNumberOfStatisticsRecords = maxNumberOfStatisticsRecords;
     }
@@ -53,11 +55,15 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
     public void handleUpdate(Update update) {
         JsonObject jsonObject = getCallbackData(update);
         String category = jsonObject.get("category").getAsString();
+        int offset = jsonObject.get("offset").getAsInt();
         Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
         long telegramUserId = getSenderTelegramId(update);
         long userId = userService.getOrCreateUserByTelegramId(telegramUserId);
-        List<Transaction> transactionsInCategory = statisticsService
-            .getMonthlyCategoryStatistics(userId, category);
+        LocalDateTime startOfMonth = YearMonth.now().plusMonths(offset).atDay(1).atStartOfDay();
+        LocalDateTime startOfNextMonth = startOfMonth.plusMonths(1);
+
+        List<Transaction> transactionsInCategory = transactionService
+            .getTransactions(userId, category, startOfMonth, startOfNextMonth);
 
         Double totalInCategory = transactionsInCategory.stream()
             .reduce(0.0, (res, tran) -> res + tran.amount(), Double::sum);

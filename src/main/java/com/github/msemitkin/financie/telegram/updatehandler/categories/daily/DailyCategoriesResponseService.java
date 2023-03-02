@@ -1,9 +1,10 @@
-package com.github.msemitkin.financie.telegram.updatehandler.categories;
+package com.github.msemitkin.financie.telegram.updatehandler.categories.daily;
 
 import com.github.msemitkin.financie.domain.CategoryStatistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.StatisticsUtil;
 import com.github.msemitkin.financie.domain.UserService;
+import com.github.msemitkin.financie.telegram.updatehandler.categories.Response;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -97,7 +98,10 @@ class DailyCategoriesResponseService {
         List<List<InlineKeyboardButton>> keyboard = statistics.stream()
             .map(tran -> InlineKeyboardButton.builder()
                 .text("%s : %s".formatted(tran.category(), formatNumber(tran.amount())))
-                .callbackData(toJson(Map.of("type", "day_trans", "category", tran.category())))
+                .callbackData(toJson(Map.of(
+                    "type", "day_trans",
+                    "category", tran.category(),
+                    "offset", dayOffset)))
                 .build())
             .map(List::of)
             .collect(Collectors.toCollection(ArrayList::new));
