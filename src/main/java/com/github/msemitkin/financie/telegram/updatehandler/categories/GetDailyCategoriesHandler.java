@@ -1,7 +1,5 @@
 package com.github.msemitkin.financie.telegram.updatehandler.categories;
 
-import com.github.msemitkin.financie.domain.StatisticsService;
-import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
 import org.springframework.stereotype.Component;
@@ -14,30 +12,27 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 @Component
 public class GetDailyCategoriesHandler extends AbstractQueryHandler {
     private final TelegramApi telegramApi;
-    private final StatisticsService statisticsService;
-    private final UserService userService;
+    private final DailyCategoriesResponseService dailyCategoriesResponseService;
 
     protected GetDailyCategoriesHandler(
         TelegramApi telegramApi,
-        StatisticsService statisticsService,
-        UserService userService
+        DailyCategoriesResponseService dailyCategoriesResponseService
     ) {
         super("daily_categories");
         this.telegramApi = telegramApi;
-        this.statisticsService = statisticsService;
-        this.userService = userService;
+        this.dailyCategoriesResponseService = dailyCategoriesResponseService;
     }
 
     @Override
     public void handleUpdate(Update update) {
-        ResponseSender responseSender = (text, keyboardMarkup) -> telegramApi
-            .execute(EditMessageText.builder()
-                .chatId(getChatId(update))
-                .messageId(update.getCallbackQuery().getMessage().getMessageId())
-                .text(text)
-                .parseMode(ParseMode.MARKDOWNV2)
-                .replyMarkup(keyboardMarkup)
-                .build());
-        new GetDailyCategoriesService(update, responseSender, statisticsService, userService).process();
+        Response response = dailyCategoriesResponseService.prepareResponse(update);
+
+        telegramApi.execute(EditMessageText.builder()
+            .chatId(getChatId(update))
+            .messageId(update.getCallbackQuery().getMessage().getMessageId())
+            .text(response.text())
+            .parseMode(ParseMode.MARKDOWNV2)
+            .replyMarkup(response.keyboardMarkup())
+            .build());
     }
 }

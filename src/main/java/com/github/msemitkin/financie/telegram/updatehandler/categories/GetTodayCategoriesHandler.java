@@ -1,7 +1,5 @@
 package com.github.msemitkin.financie.telegram.updatehandler.categories;
 
-import com.github.msemitkin.financie.domain.StatisticsService;
-import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
@@ -14,30 +12,27 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 
 @Component
 public class GetTodayCategoriesHandler extends AbstractTextCommandHandler {
-    private final UserService userService;
-    private final StatisticsService statisticsService;
     private final TelegramApi telegramApi;
+    private final DailyCategoriesResponseService dailyCategoriesResponseService;
 
     protected GetTodayCategoriesHandler(
-        UserService userService,
-        StatisticsService statisticsService,
-        TelegramApi telegramApi
+        TelegramApi telegramApi,
+        DailyCategoriesResponseService dailyCategoriesResponseService
     ) {
         super(BotCommand.TODAY.getCommand());
-        this.userService = userService;
-        this.statisticsService = statisticsService;
         this.telegramApi = telegramApi;
+        this.dailyCategoriesResponseService = dailyCategoriesResponseService;
     }
 
     @Override
     public void handleUpdate(Update update) {
-        ResponseSender responseSender = (text, keyboardMarkup) -> telegramApi
-            .execute(SendMessage.builder()
-                .chatId(getChatId(update))
-                .text(text)
-                .parseMode(ParseMode.MARKDOWNV2)
-                .replyMarkup(keyboardMarkup)
-                .build());
-        new GetDailyCategoriesService(update, responseSender, statisticsService, userService).process();
+        Response response = dailyCategoriesResponseService.prepareResponse(update);
+
+        telegramApi.execute(SendMessage.builder()
+            .chatId(getChatId(update))
+            .text(response.text())
+            .parseMode(ParseMode.MARKDOWNV2)
+            .replyMarkup(response.keyboardMarkup())
+            .build());
     }
 }

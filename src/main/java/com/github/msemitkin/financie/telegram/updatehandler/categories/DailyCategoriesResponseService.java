@@ -7,6 +7,7 @@ import com.github.msemitkin.financie.domain.UserService;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -25,24 +26,20 @@ import static com.github.msemitkin.financie.telegram.util.JsonUtil.toJson;
 import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 
-class GetDailyCategoriesService {
-    private final Update update;
-    private final ResponseSender responseSender;
+@Component
+class DailyCategoriesResponseService {
     private final StatisticsService statisticsService;
     private final UserService userService;
 
-    GetDailyCategoriesService(
-        Update update,
-        ResponseSender responseSender,
+    DailyCategoriesResponseService(
         StatisticsService statisticsService,
-        UserService userService) {
-        this.update = update;
-        this.responseSender = responseSender;
+        UserService userService
+    ) {
         this.statisticsService = statisticsService;
         this.userService = userService;
     }
 
-    void process() {
+    Response prepareResponse(Update update) {
         int dayOffset = getOffset(update);
         long userId = userService.getOrCreateUserByTelegramId(getSenderTelegramId(update));
         List<CategoryStatistics> statistics = getDailyCategories(userId, dayOffset);
@@ -50,7 +47,7 @@ class GetDailyCategoriesService {
             String message = "No transactions " +
                              (dayOffset == 0 ? "today" : "on " + formatDate(LocalDate.now().plusDays(dayOffset)));
             var keyboardMarkup = InlineKeyboardMarkup.builder().keyboardRow(getPageButtons(dayOffset)).build();
-            responseSender.sendResponse(escapeMarkdownV2(message), keyboardMarkup);
+            return new Response(escapeMarkdownV2(message), keyboardMarkup);
         } else {
             double total = StatisticsUtil.sum(statistics);
             String message = escapeMarkdownV2("""
@@ -58,7 +55,7 @@ class GetDailyCategoriesService {
                 Total: `%s`
                 """.formatted(formatDate(LocalDate.now().plusDays(dayOffset)), formatNumber(total)));
             var keyboardMarkup = InlineKeyboardMarkup.builder().keyboard(getKeyboard(statistics, dayOffset)).build();
-            responseSender.sendResponse(message, keyboardMarkup);
+            return new Response(message, keyboardMarkup);
         }
     }
 
