@@ -81,7 +81,7 @@ public class MonthlyCategoriesResponseService {
     }
 
     private String getPageButtonCallbackData(int offset) {
-        return toJson(Map.of("type", "monthly_categories", "offset", offset));
+        return toJson(Map.of("tp", "monthly_categories", "offset", offset));
     }
 
     private String getText(double total, String month) {
@@ -93,10 +93,10 @@ public class MonthlyCategoriesResponseService {
     private InlineKeyboardMarkup getKeyboard(List<CategoryStatistics> statistics, int monthOffset) {
         List<List<InlineKeyboardButton>> rows = statistics.stream()
             .map(stats -> {
-                String text = "%s: %s".formatted(formatNumber(stats.amount()), stats.category());
+                String text = "%s: %s".formatted(formatNumber(stats.amount()), stats.categoryName());
                 String callbackData = toJson(Map.of(
-                    "type", "monthly_stats",
-                    "category", stats.category(),
+                    "tp", "monthly_stats",
+                    "cat_id", stats.categoryId(),
                     "offset", monthOffset
                 ));
                 return button(text, callbackData);

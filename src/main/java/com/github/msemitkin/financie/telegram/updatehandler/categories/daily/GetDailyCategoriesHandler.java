@@ -19,7 +19,7 @@ public class GetDailyCategoriesHandler extends AbstractQueryHandler {
         TelegramApi telegramApi,
         DailyCategoriesResponseService dailyCategoriesResponseService
     ) {
-        super("daily_categories");
+        super("day_cat");
         this.telegramApi = telegramApi;
         this.dailyCategoriesResponseService = dailyCategoriesResponseService;
     }

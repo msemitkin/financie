@@ -91,16 +91,16 @@ class DailyCategoriesResponseService {
     }
 
     private String getPageButtonCallbackData(int dayOffset) {
-        return toJson(Map.of("type", "daily_categories", "offset", dayOffset));
+        return toJson(Map.of("tp", "day_cat", "offset", dayOffset));
     }
 
     private List<List<InlineKeyboardButton>> getKeyboard(List<CategoryStatistics> statistics, int dayOffset) {
         List<List<InlineKeyboardButton>> keyboard = statistics.stream()
             .map(tran -> InlineKeyboardButton.builder()
-                .text("%s : %s".formatted(tran.category(), formatNumber(tran.amount())))
+                .text("%s : %s".formatted(tran.categoryName(), formatNumber(tran.amount())))
                 .callbackData(toJson(Map.of(
-                    "type", "day_trans",
-                    "category", tran.category(),
+                    "tp", "day_trans",
+                    "cat_id", tran.categoryId(),
                     "offset", dayOffset)))
                 .build())
             .map(List::of)

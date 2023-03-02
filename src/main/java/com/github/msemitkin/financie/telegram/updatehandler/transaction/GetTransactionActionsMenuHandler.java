@@ -37,7 +37,7 @@ public class GetTransactionActionsMenuHandler extends AbstractQueryHandler {
 
         InlineKeyboardButton inlineKeyboardButton = InlineKeyboardButton.builder()
             .text("Delete")
-            .callbackData(toJson(Map.of("type", "transactions/delete", "transactionId", transactionId)))
+            .callbackData(toJson(Map.of("tp", "transactions/delete", "transactionId", transactionId)))
             .build();
         InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
             .keyboardRow(List.of(inlineKeyboardButton))

@@ -1,5 +1,7 @@
 package com.github.msemitkin.financie.telegram.updatehandler.transaction;
 
+import com.github.msemitkin.financie.domain.Category;
+import com.github.msemitkin.financie.domain.CategoryService;
 import com.github.msemitkin.financie.domain.Transaction;
 import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.domain.TransactionUtil;
@@ -31,16 +33,19 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTe
 public class GetDailyTransactionsHandler extends AbstractQueryHandler {
     private final TransactionService transactionService;
     private final UserService userService;
+    private final CategoryService categoryService;
     private final TelegramApi telegramApi;
 
     public GetDailyTransactionsHandler(
         TransactionService transactionService,
         UserService userService,
+        CategoryService categoryService,
         TelegramApi telegramApi
     ) {
         super("day_trans");
         this.transactionService = transactionService;
         this.userService = userService;
+        this.categoryService = categoryService;
         this.telegramApi = telegramApi;
     }
 
@@ -50,12 +55,13 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
         long userId = userService.getOrCreateUserByTelegramId(senderTelegramId);
         long chatId = getChatId(update);
         JsonObject payload = getCallbackData(update);
-        String category = payload.get("category").getAsString();
+        long categoryId = payload.get("cat_id").getAsLong();
         int offset = payload.get("offset").getAsInt();
         LocalDateTime startOfDay = LocalDate.now().plusDays(offset).atStartOfDay();
         LocalDateTime startOfNextDay = startOfDay.plusDays(1);
+        Category category = categoryService.getCategory(categoryId);
         List<Transaction> transactions = transactionService
-            .getTransactions(userId, category, startOfDay, startOfNextDay)
+            .getTransactions(userId, category.name(), startOfDay, startOfNextDay)
             .stream()
             .sorted(Comparator.comparing(Transaction::time).reversed())
             .toList();
@@ -75,7 +81,7 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
             telegramApi.execute(EditMessageText.builder()
                 .chatId(chatId)
                 .messageId(messageId)
-                .text("Today in category *%s*: `%s`".formatted(category, formatNumber(total)))
+                .text("Today in category *%s*: `%s`".formatted(category.name(), formatNumber(total)))
                 .parseMode(ParseMode.MARKDOWNV2)
                 .replyMarkup(InlineKeyboardMarkup.builder().keyboard(rows).build())
                 .build());
@@ -88,7 +94,7 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
                 Transaction tran = transactions.get(index);
                 return InlineKeyboardButton.builder()
                     .text("%d. %s : %s".formatted(transactions.size() - index, tran.category(), formatNumber(tran.amount())))
-                    .callbackData(JsonUtil.toJson(Map.of("type", "transactions/actions", "transactionId", tran.id())))
+                    .callbackData(JsonUtil.toJson(Map.of("tp", "transactions/actions", "transactionId", tran.id())))
                     .build();
             })
             .map(List::of)

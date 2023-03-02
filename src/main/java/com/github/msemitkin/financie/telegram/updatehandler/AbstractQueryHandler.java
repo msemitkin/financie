@@ -24,7 +24,7 @@ public abstract class AbstractQueryHandler implements UpdateHandler {
     @Override
     public final boolean canHandle(Update update) {
         return getCallbackDataOpt(update)
-            .map(json -> json.get("type"))
+            .map(json -> json.get("tp"))
             .map(JsonElement::getAsString)
             .map(queryTypes::contains)
             .orElse(false);

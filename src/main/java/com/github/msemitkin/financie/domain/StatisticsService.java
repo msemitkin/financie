@@ -38,10 +38,10 @@ public class StatisticsService {
         Map<Long, CategoryEntity> categories = categoryRepository
             .findAllByIds(new ArrayList<>(transactionsByCategoryId.keySet()));
         return amounts.entrySet().stream()
-            .map(entry -> new CategoryStatistics(
-                    categories.get(entry.getKey()).getName(),
-                    entry.getValue()
-                )
+            .map(entry -> {
+                    CategoryEntity category = categories.get(entry.getKey());
+                    return new CategoryStatistics(category.getId(), category.getName(), entry.getValue());
+                }
             )
             .sorted(Comparator.comparingDouble(CategoryStatistics::amount).reversed())
             .toList();
