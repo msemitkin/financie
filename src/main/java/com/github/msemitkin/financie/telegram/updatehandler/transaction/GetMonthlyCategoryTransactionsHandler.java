@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.YearMonth;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -70,7 +71,8 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
         Category category = categoryService.getCategory(categoryId);
 
         List<Transaction> transactionsInCategory = transactionService
-            .getTransactions(userId, category.name(), startOfMonth, startOfNextMonth);
+            .getTransactions(userId, category.name(), startOfMonth, startOfNextMonth)
+            .stream().sorted(Comparator.comparing(Transaction::time).reversed()).toList();
 
         Double totalInCategory = transactionsInCategory.stream()
             .reduce(0.0, (res, tran) -> res + tran.amount(), Double::sum);
