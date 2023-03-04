@@ -3,13 +3,14 @@ package com.github.msemitkin.financie.telegram.updatehandler.categories.monthly;
 import com.github.msemitkin.financie.domain.CategoryStatistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.UserService;
+import com.github.msemitkin.financie.telegram.callback.Callback;
+import com.github.msemitkin.financie.telegram.callback.CallbackService;
+import com.github.msemitkin.financie.telegram.callback.CallbackType;
+import com.github.msemitkin.financie.telegram.callback.command.GetMonthlyCategoriesCommand;
+import com.github.msemitkin.financie.telegram.callback.command.GetMonthlyCategoryTransactionsCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.categories.Response;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -18,34 +19,34 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
-import static com.github.msemitkin.financie.telegram.util.JsonUtil.toJson;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 
 @Service
 public class MonthlyCategoriesResponseService {
     private final UserService userService;
     private final StatisticsService statisticsService;
+    private final CallbackService callbackService;
     private final int maxNumberOfStatisticsRecords;
 
     public MonthlyCategoriesResponseService(
         UserService userService,
         StatisticsService statisticsService,
-        @Value("${com.github.msemitkin.financie.statistics.max-number-of-displayed-records}")
-        int maxNumberOfStatisticsRecords
+        CallbackService callbackService,
+        @Value("${com.github.msemitkin.financie.statistics.max-number-of-displayed-records}") int maxNumberOfStatisticsRecords
     ) {
         this.userService = userService;
         this.statisticsService = statisticsService;
+        this.callbackService = callbackService;
         this.maxNumberOfStatisticsRecords = maxNumberOfStatisticsRecords;
     }
 
-    Response getResponse(Update update) {
-        int monthOffset = getOffset(update);
+    Response getResponse(Update update, GetMonthlyCategoriesCommand command) {
+        int monthOffset = command.offset();
         long userTelegramId = getSenderTelegramId(update);
         long userId = userService.getUserByTelegramId(userTelegramId).id();
 
@@ -81,7 +82,9 @@ public class MonthlyCategoriesResponseService {
     }
 
     private String getPageButtonCallbackData(int offset) {
-        return toJson(Map.of("tp", "monthly_categories", "offset", offset));
+        var callback = new Callback<>(CallbackType.GET_CATEGORIES_FOR_MONTH, new GetMonthlyCategoriesCommand(offset));
+        UUID callbackId = callbackService.saveCallback(callback);
+        return callbackId.toString();
     }
 
     private String getText(double total, String month) {
@@ -94,26 +97,17 @@ public class MonthlyCategoriesResponseService {
         List<List<InlineKeyboardButton>> rows = statistics.stream()
             .map(stats -> {
                 String text = "%s: %s".formatted(formatNumber(stats.amount()), stats.categoryName());
-                String callbackData = toJson(Map.of(
-                    "tp", "monthly_stats",
-                    "cat_id", stats.categoryId(),
-                    "offset", monthOffset
-                ));
-                return button(text, callbackData);
+                var callback = new Callback<>(
+                    CallbackType.GET_CATEGORY_TRANSACTIONS_FOR_MONTH,
+                    new GetMonthlyCategoryTransactionsCommand(stats.categoryId(), monthOffset)
+                );
+                UUID callbackId = callbackService.saveCallback(callback);
+                return button(text, callbackId.toString());
             })
             .map(List::of)
             .limit(maxNumberOfStatisticsRecords)
             .collect(Collectors.toCollection(ArrayList::new));
         rows.add(getPageButtons(monthOffset));
         return InlineKeyboardMarkup.builder().keyboard(rows).build();
-    }
-
-    private int getOffset(Update update) {
-        return Optional.ofNullable(update.getCallbackQuery())
-            .map(CallbackQuery::getData)
-            .map(data -> new Gson().fromJson(data, JsonObject.class))
-            .map(json -> json.get("offset"))
-            .map(JsonElement::getAsInt)
-            .orElse(0);
     }
 }

@@ -1,6 +1,9 @@
 package com.github.msemitkin.financie.telegram.updatehandler.categories.daily;
 
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.callback.CallbackService;
+import com.github.msemitkin.financie.telegram.callback.CallbackType;
+import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoriesCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.categories.Response;
 import org.springframework.stereotype.Component;
@@ -17,16 +20,18 @@ public class GetDailyCategoriesHandler extends AbstractQueryHandler {
 
     protected GetDailyCategoriesHandler(
         TelegramApi telegramApi,
-        DailyCategoriesResponseService dailyCategoriesResponseService
+        DailyCategoriesResponseService dailyCategoriesResponseService,
+        CallbackService callbackService
     ) {
-        super("day_cat");
+        super(CallbackType.GET_CATEGORIES_FOR_DAY, callbackService);
         this.telegramApi = telegramApi;
         this.dailyCategoriesResponseService = dailyCategoriesResponseService;
     }
 
     @Override
     public void handleUpdate(Update update) {
-        Response response = dailyCategoriesResponseService.prepareResponse(update);
+        var callbackData = getCallbackData(update, GetDailyCategoriesCommand.class);
+        Response response = dailyCategoriesResponseService.prepareResponse(update, callbackData);
 
         telegramApi.execute(EditMessageText.builder()
             .chatId(getChatId(update))

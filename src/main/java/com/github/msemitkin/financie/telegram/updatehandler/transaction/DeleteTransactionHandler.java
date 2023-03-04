@@ -3,8 +3,10 @@ package com.github.msemitkin.financie.telegram.updatehandler.transaction;
 import com.github.msemitkin.financie.domain.Transaction;
 import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.callback.CallbackService;
+import com.github.msemitkin.financie.telegram.callback.CallbackType;
+import com.github.msemitkin.financie.telegram.callback.command.DeleteTransactionCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
-import com.google.gson.JsonObject;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -19,18 +21,22 @@ public class DeleteTransactionHandler extends AbstractQueryHandler {
     private final TransactionService transactionService;
     private final TelegramApi telegramApi;
 
-    public DeleteTransactionHandler(TransactionService transactionService, TelegramApi telegramApi) {
-        super("transactions/delete");
+    public DeleteTransactionHandler(
+        TransactionService transactionService,
+        CallbackService callbackService,
+        TelegramApi telegramApi
+    ) {
+        super(CallbackType.DELETE_TRANSACTION, callbackService);
         this.transactionService = transactionService;
         this.telegramApi = telegramApi;
     }
 
     @Override
     public void handleUpdate(Update update) {
-        JsonObject callbackJson = getCallbackData(update);
+        DeleteTransactionCommand callbackData = getCallbackData(update, DeleteTransactionCommand.class);
         Long chatId = getChatId(update);
         Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
-        long transactionId = callbackJson.get("transactionId").getAsLong();
+        long transactionId = callbackData.transactionId();
         Transaction transaction = transactionService.getTransaction(transactionId);
         transactionService.deleteTransaction(transactionId);
 

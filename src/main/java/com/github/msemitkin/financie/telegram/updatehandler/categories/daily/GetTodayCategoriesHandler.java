@@ -1,9 +1,9 @@
 package com.github.msemitkin.financie.telegram.updatehandler.categories.daily;
 
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoriesCommand;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
-import com.github.msemitkin.financie.telegram.updatehandler.categories.Response;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -27,7 +27,7 @@ public class GetTodayCategoriesHandler extends AbstractTextCommandHandler {
 
     @Override
     public void handleUpdate(Update update) {
-        Response response = dailyCategoriesResponseService.prepareResponse(update);
+        var response = dailyCategoriesResponseService.prepareResponse(update, new GetDailyCategoriesCommand(0));
 
         telegramApi.execute(SendMessage.builder()
             .chatId(getChatId(update))

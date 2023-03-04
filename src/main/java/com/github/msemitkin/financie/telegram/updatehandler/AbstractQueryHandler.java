@@ -1,43 +1,56 @@
 package com.github.msemitkin.financie.telegram.updatehandler;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.github.msemitkin.financie.telegram.callback.Callback;
+import com.github.msemitkin.financie.telegram.callback.CallbackService;
+import com.github.msemitkin.financie.telegram.callback.CallbackType;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 public abstract class AbstractQueryHandler implements UpdateHandler {
-    private final Set<String> queryTypes;
+    protected final CallbackService callbackService;
+    private final Set<CallbackType> queryTypes;
 
-    protected AbstractQueryHandler(Set<String> queryTypes) {
+    protected AbstractQueryHandler(
+        CallbackService callbackService,
+        Set<CallbackType> queryTypes
+    ) {
+        this.callbackService = callbackService;
         this.queryTypes = queryTypes;
     }
 
-    protected AbstractQueryHandler(String queryType) {
-        this(Set.of(queryType));
+    protected AbstractQueryHandler(
+        CallbackType queryType, CallbackService callbackService
+    ) {
+        this(callbackService, Set.of(queryType));
     }
 
     @Override
     public final boolean canHandle(Update update) {
-        return getCallbackDataOpt(update)
-            .map(json -> json.get("tp"))
-            .map(JsonElement::getAsString)
+        return Optional.ofNullable(getCallbackId(update))
+            .map(callbackService::getCallbackType)
             .map(queryTypes::contains)
             .orElse(false);
     }
 
-    @NonNull
-    protected JsonObject getCallbackData(@NonNull Update update) {
-        return getCallbackDataOpt(update).orElseThrow();
-    }
-
-    private Optional<JsonObject> getCallbackDataOpt(@NonNull Update update) {
+    @Nullable
+    private UUID getCallbackId(Update update) {
         return Optional.ofNullable(update.getCallbackQuery())
             .map(CallbackQuery::getData)
-            .map(data -> new Gson().fromJson(data, JsonObject.class));
+            .map(UUID::fromString)
+            .orElse(null);
+    }
+
+    @NonNull
+    protected <T> T getCallbackData(@NonNull Update update, Class<T> tClass) {
+        return Optional.ofNullable(getCallbackId(update))
+            .map(id -> callbackService.getCallback(id, tClass))
+            .map(Callback::payload)
+            .orElseThrow();
     }
 }

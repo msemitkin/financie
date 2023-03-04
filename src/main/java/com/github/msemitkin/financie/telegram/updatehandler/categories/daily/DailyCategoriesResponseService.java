@@ -4,12 +4,13 @@ import com.github.msemitkin.financie.domain.CategoryStatistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.StatisticsUtil;
 import com.github.msemitkin.financie.domain.UserService;
+import com.github.msemitkin.financie.telegram.callback.Callback;
+import com.github.msemitkin.financie.telegram.callback.CallbackService;
+import com.github.msemitkin.financie.telegram.callback.CallbackType;
+import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoriesCommand;
+import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoryTransactionsCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.categories.Response;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -17,13 +18,12 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.github.msemitkin.financie.telegram.callback.CallbackType.GET_CATEGORY_TRANSACTIONS_FOR_DAY;
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatDate;
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
-import static com.github.msemitkin.financie.telegram.util.JsonUtil.toJson;
 import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 
@@ -31,17 +31,20 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTe
 class DailyCategoriesResponseService {
     private final StatisticsService statisticsService;
     private final UserService userService;
+    private final CallbackService callbackService;
 
     DailyCategoriesResponseService(
         StatisticsService statisticsService,
-        UserService userService
+        UserService userService,
+        CallbackService callbackService
     ) {
         this.statisticsService = statisticsService;
         this.userService = userService;
+        this.callbackService = callbackService;
     }
 
-    Response prepareResponse(Update update) {
-        int dayOffset = getOffset(update);
+    Response prepareResponse(Update update, GetDailyCategoriesCommand command) {
+        int dayOffset = command.offset();
         long userId = userService.getUserByTelegramId(getSenderTelegramId(update)).id();
         List<CategoryStatistics> statistics = getDailyCategories(userId, dayOffset);
         if (statistics.isEmpty()) {
@@ -58,15 +61,6 @@ class DailyCategoriesResponseService {
             var keyboardMarkup = InlineKeyboardMarkup.builder().keyboard(getKeyboard(statistics, dayOffset)).build();
             return new Response(message, keyboardMarkup);
         }
-    }
-
-    private int getOffset(Update update) {
-        return Optional.ofNullable(update.getCallbackQuery())
-            .map(CallbackQuery::getData)
-            .map(data -> new Gson().fromJson(data, JsonObject.class))
-            .map(json -> json.get("offset"))
-            .map(JsonElement::getAsInt)
-            .orElse(0);
     }
 
     private List<CategoryStatistics> getDailyCategories(long userId, int dayOffset) {
@@ -91,18 +85,23 @@ class DailyCategoriesResponseService {
     }
 
     private String getPageButtonCallbackData(int dayOffset) {
-        return toJson(Map.of("tp", "day_cat", "offset", dayOffset));
+        var command = new GetDailyCategoriesCommand(dayOffset);
+        return callbackService.saveCallback(new Callback<>(CallbackType.GET_CATEGORIES_FOR_DAY, command)).toString();
     }
 
     private List<List<InlineKeyboardButton>> getKeyboard(List<CategoryStatistics> statistics, int dayOffset) {
         List<List<InlineKeyboardButton>> keyboard = statistics.stream()
-            .map(tran -> InlineKeyboardButton.builder()
-                .text("%s : %s".formatted(tran.categoryName(), formatNumber(tran.amount())))
-                .callbackData(toJson(Map.of(
-                    "tp", "day_trans",
-                    "cat_id", tran.categoryId(),
-                    "offset", dayOffset)))
-                .build())
+            .map(tran -> {
+                var callback = new Callback<>(
+                    GET_CATEGORY_TRANSACTIONS_FOR_DAY,
+                    new GetDailyCategoryTransactionsCommand(tran.categoryId(), dayOffset)
+                );
+                UUID callbackId = callbackService.saveCallback(callback);
+                return InlineKeyboardButton.builder()
+                    .text("%s : %s".formatted(tran.categoryName(), formatNumber(tran.amount())))
+                    .callbackData(callbackId.toString())
+                    .build();
+            })
             .map(List::of)
             .collect(Collectors.toCollection(ArrayList::new));
         keyboard.add(getPageButtons(dayOffset));

@@ -1,9 +1,9 @@
 package com.github.msemitkin.financie.telegram.updatehandler.categories.monthly;
 
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.callback.command.GetMonthlyCategoriesCommand;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
-import com.github.msemitkin.financie.telegram.updatehandler.categories.Response;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -21,7 +21,7 @@ public class GetThisMonthCategoriesHandler extends AbstractTextCommandHandler {
     public GetThisMonthCategoriesHandler(
         TelegramApi telegramApi,
         MonthlyCategoriesResponseService monthlyCategoriesResponseService
-        ) {
+    ) {
         super(BotCommand.MONTHLY_STATISTICS.getCommand());
         this.telegramApi = telegramApi;
         this.monthlyCategoriesResponseService = monthlyCategoriesResponseService;
@@ -29,7 +29,7 @@ public class GetThisMonthCategoriesHandler extends AbstractTextCommandHandler {
 
     @Override
     public void handleUpdate(Update update) {
-        Response response = monthlyCategoriesResponseService.getResponse(update);
+        var response = monthlyCategoriesResponseService.getResponse(update, new GetMonthlyCategoriesCommand(0));
         Long chatId = getChatId(update);
         sendMessage(chatId, response.text(), response.keyboardMarkup());
     }

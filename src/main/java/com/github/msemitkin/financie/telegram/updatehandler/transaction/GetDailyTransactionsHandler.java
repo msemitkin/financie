@@ -7,9 +7,12 @@ import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.domain.TransactionUtil;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.callback.Callback;
+import com.github.msemitkin.financie.telegram.callback.CallbackService;
+import com.github.msemitkin.financie.telegram.callback.CallbackType;
+import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoryTransactionsCommand;
+import com.github.msemitkin.financie.telegram.callback.command.GetTransactionActionsCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
-import com.github.msemitkin.financie.telegram.util.JsonUtil;
-import com.google.gson.JsonObject;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
@@ -22,7 +25,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
@@ -40,9 +43,10 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
         TransactionService transactionService,
         UserService userService,
         CategoryService categoryService,
+        CallbackService callbackService,
         TelegramApi telegramApi
     ) {
-        super("day_trans");
+        super(CallbackType.GET_CATEGORY_TRANSACTIONS_FOR_DAY, callbackService);
         this.transactionService = transactionService;
         this.userService = userService;
         this.categoryService = categoryService;
@@ -54,9 +58,9 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
         long chatId = getChatId(update);
         long userTelegramId = getFrom(update).getId();
         long userId = userService.getUserByTelegramId(userTelegramId).id();
-        JsonObject payload = getCallbackData(update);
-        long categoryId = payload.get("cat_id").getAsLong();
-        int offset = payload.get("offset").getAsInt();
+        var callbackData = getCallbackData(update, GetDailyCategoryTransactionsCommand.class);
+        long categoryId = callbackData.categoryId();
+        int offset = callbackData.offset();
         LocalDateTime startOfDay = LocalDate.now().plusDays(offset).atStartOfDay();
         LocalDateTime startOfNextDay = startOfDay.plusDays(1);
         Category category = categoryService.getCategory(categoryId);
@@ -92,9 +96,16 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
         return IntStream.range(0, transactions.size())
             .mapToObj(index -> {
                 Transaction tran = transactions.get(index);
+                String text = "%d. %s : %s".formatted(
+                    transactions.size() - index, tran.category(), formatNumber(tran.amount()));
+                var callback = new Callback<>(
+                    CallbackType.GET_TRANSACTION_ACTIONS,
+                    new GetTransactionActionsCommand(tran.id())
+                );
+                UUID callbackId = callbackService.saveCallback(callback);
                 return InlineKeyboardButton.builder()
-                    .text("%d. %s : %s".formatted(transactions.size() - index, tran.category(), formatNumber(tran.amount())))
-                    .callbackData(JsonUtil.toJson(Map.of("tp", "transactions/actions", "transactionId", tran.id())))
+                    .text(text)
+                    .callbackData(callbackId.toString())
                     .build();
             })
             .map(List::of)
