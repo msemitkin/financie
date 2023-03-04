@@ -5,7 +5,6 @@ import com.github.msemitkin.financie.persistence.entity.TransactionEntity;
 import com.github.msemitkin.financie.persistence.mapper.TransactionMapper;
 import com.github.msemitkin.financie.persistence.repository.CategoryRepository;
 import com.github.msemitkin.financie.persistence.repository.TransactionRepository;
-import com.github.msemitkin.financie.persistence.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -19,24 +18,16 @@ import static java.util.Objects.requireNonNullElse;
 public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final CategoryRepository categoryRepository;
-    private final UserRepository userRepository;
     private final TransactionValidator transactionValidator;
 
     public TransactionService(
         TransactionRepository transactionRepository,
         CategoryRepository categoryRepository,
-        UserRepository userRepository,
         TransactionValidator transactionValidator
     ) {
         this.transactionRepository = transactionRepository;
         this.categoryRepository = categoryRepository;
-        this.userRepository = userRepository;
         this.transactionValidator = transactionValidator;
-    }
-
-    @Deprecated
-    public long getOrCreateUserByTelegramId(long telegramId) {
-        return userRepository.getUserEntityByTelegramId(telegramId).getId();
     }
 
     public void saveTransaction(SaveTransactionCommand command) {

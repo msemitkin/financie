@@ -4,6 +4,7 @@ import com.github.msemitkin.financie.domain.SaveTransactionCommand;
 import com.github.msemitkin.financie.domain.Statistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.TransactionService;
+import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.telegram.MessageException;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.transaction.IncomingTransaction;
@@ -27,7 +28,6 @@ import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNu
 import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
-import static java.util.Objects.requireNonNull;
 
 @Component
 public class SaveTransactionHandler implements UpdateHandler {
@@ -37,6 +37,7 @@ public class SaveTransactionHandler implements UpdateHandler {
     private final TransactionParser transactionParser;
     private final TransactionService transactionService;
     private final StatisticsService statisticsService;
+    private final UserService userService;
 
     public SaveTransactionHandler(
         TelegramApi telegramApi,
@@ -44,7 +45,8 @@ public class SaveTransactionHandler implements UpdateHandler {
         TransactionCommandValidator transactionCommandValidator,
         TransactionParser transactionParser,
         TransactionService transactionService,
-        StatisticsService statisticsService
+        StatisticsService statisticsService,
+        UserService userService
     ) {
         this.telegramApi = telegramApi;
         this.transactionRecognizer = transactionRecognizer;
@@ -52,6 +54,7 @@ public class SaveTransactionHandler implements UpdateHandler {
         this.transactionParser = transactionParser;
         this.transactionService = transactionService;
         this.statisticsService = statisticsService;
+        this.userService = userService;
     }
 
     @Override
@@ -66,14 +69,14 @@ public class SaveTransactionHandler implements UpdateHandler {
     public void handleUpdate(Update update) {
         Long chatId = getChatId(update);
         String text = update.getMessage().getText();
-        Long senderTelegramId = requireNonNull(getSenderTelegramId(update));
+        long senderTelegramId = getSenderTelegramId(update);
         Integer messageId = update.getMessage().getMessageId();
         try {
             transactionCommandValidator.validateTransaction(text);
 
             IncomingTransaction incomingTransaction = transactionParser.parseTransaction(text);
 
-            long userId = transactionService.getOrCreateUserByTelegramId(senderTelegramId);
+            long userId = userService.getUserByTelegramId(senderTelegramId).id();
             SaveTransactionCommand command = new SaveTransactionCommand(
                 userId, incomingTransaction.amount(), incomingTransaction.category(), null, null);
             transactionService.saveTransaction(command);
