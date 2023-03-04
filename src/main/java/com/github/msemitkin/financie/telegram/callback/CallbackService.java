@@ -28,13 +28,13 @@ public class CallbackService {
 
     public CallbackType getCallbackType(@NonNull UUID id) {
         return callbackRepository.findById(id)
-            .map(CallbackEntity::getType)
+            .map(CallbackEntity::type)
             .orElse(null);
     }
 
     public <T> Callback<T> getCallback(@NonNull UUID id, Class<T> tClass) {
         return callbackRepository.findById(id)
-            .map(it -> new Callback<>(it.getType(), gson.fromJson(it.getPayload(), tClass)))
+            .map(it -> new Callback<>(it.type(), gson.fromJson(it.payload(), tClass)))
             .orElse(null);
     }
 }

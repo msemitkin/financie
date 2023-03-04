@@ -22,9 +22,9 @@ public class CallbackRepository {
                 VALUES (:id, :type, (SELECT to_json(:payload::json)))
                 """,
             Map.of(
-                "id", callback.getId(),
-                "type", callback.getType().name(),
-                "payload", callback.getPayload()
+                "id", callback.id(),
+                "type", callback.type().name(),
+                "payload", callback.payload()
             ));
     }
 
