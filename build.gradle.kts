@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.msemitkin.financie"
-version = "0.5.0"
+version = "1.0.0"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
