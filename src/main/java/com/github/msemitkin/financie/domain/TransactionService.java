@@ -2,7 +2,6 @@ package com.github.msemitkin.financie.domain;
 
 import com.github.msemitkin.financie.persistence.entity.CategoryEntity;
 import com.github.msemitkin.financie.persistence.entity.TransactionEntity;
-import com.github.msemitkin.financie.persistence.entity.UserEntity;
 import com.github.msemitkin.financie.persistence.mapper.TransactionMapper;
 import com.github.msemitkin.financie.persistence.repository.CategoryRepository;
 import com.github.msemitkin.financie.persistence.repository.TransactionRepository;
@@ -37,10 +36,7 @@ public class TransactionService {
 
     @Deprecated
     public long getOrCreateUserByTelegramId(long telegramId) {
-        UserEntity user = userRepository.getUserEntityByTelegramId(telegramId);
-        return Optional.ofNullable(user)
-            .orElseGet(() -> userRepository.save(new UserEntity(null, telegramId)))
-            .getId();
+        return userRepository.getUserEntityByTelegramId(telegramId).getId();
     }
 
     public void saveTransaction(SaveTransactionCommand command) {

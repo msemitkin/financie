@@ -52,7 +52,7 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
     @Override
     public void handleUpdate(Update update) {
         long senderTelegramId = getSenderTelegramId(update);
-        long userId = userService.getOrCreateUserByTelegramId(senderTelegramId);
+        long userId = userService.getUserByTelegramId(senderTelegramId).id();
         long chatId = getChatId(update);
         JsonObject payload = getCallbackData(update);
         long categoryId = payload.get("cat_id").getAsLong();

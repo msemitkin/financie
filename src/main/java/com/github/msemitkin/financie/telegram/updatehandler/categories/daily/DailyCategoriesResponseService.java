@@ -42,7 +42,7 @@ class DailyCategoriesResponseService {
 
     Response prepareResponse(Update update) {
         int dayOffset = getOffset(update);
-        long userId = userService.getOrCreateUserByTelegramId(getSenderTelegramId(update));
+        long userId = userService.getUserByTelegramId(getSenderTelegramId(update)).id();
         List<CategoryStatistics> statistics = getDailyCategories(userId, dayOffset);
         if (statistics.isEmpty()) {
             String message = "No transactions " +

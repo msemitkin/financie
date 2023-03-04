@@ -47,7 +47,7 @@ public class MonthlyCategoriesResponseService {
     Response getResponse(Update update) {
         int monthOffset = getOffset(update);
         long userTelegramId = getSenderTelegramId(update);
-        long userId = userService.getOrCreateUserByTelegramId(userTelegramId);
+        long userId = userService.getUserByTelegramId(userTelegramId).id();
 
         LocalDateTime startOfMonth = YearMonth.now().plusMonths(monthOffset).atDay(1).atStartOfDay();
         LocalDateTime startOfNextMonth = startOfMonth.plusMonths(1);

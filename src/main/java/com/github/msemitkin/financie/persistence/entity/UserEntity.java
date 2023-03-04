@@ -16,13 +16,32 @@ public class UserEntity {
     private Long id;
     @Column(name = "telegram_id")
     private Long telegramId;
+    @Column(name = "telegram_chat_id")
+    private Long telegramChatId;
+    @Column(name = "telegram_username")
+    private String telegramUsername;
+    @Column(name = "first_name")
+    private String firstName;
+    @Column(name = "last_name")
+    private String lastName;
 
     public UserEntity() {
     }
 
-    public UserEntity(Long id, Long telegramId) {
+    public UserEntity(
+        Long id,
+        Long telegramId,
+        Long telegramChatId,
+        String telegramUsername,
+        String firstName,
+        String lastName
+    ) {
         this.id = id;
         this.telegramId = telegramId;
+        this.telegramChatId = telegramChatId;
+        this.telegramUsername = telegramUsername;
+        this.firstName = firstName;
+        this.lastName = lastName;
     }
 
     public Long getId() {
@@ -39,5 +58,37 @@ public class UserEntity {
 
     public void setTelegramId(Long telegramId) {
         this.telegramId = telegramId;
+    }
+
+    public Long getTelegramChatId() {
+        return telegramChatId;
+    }
+
+    public void setTelegramChatId(Long telegramChatId) {
+        this.telegramChatId = telegramChatId;
+    }
+
+    public String getTelegramUsername() {
+        return telegramUsername;
+    }
+
+    public void setTelegramUsername(String telegramUsername) {
+        this.telegramUsername = telegramUsername;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 }

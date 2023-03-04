@@ -64,7 +64,7 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
         int offset = jsonObject.get("offset").getAsInt();
         Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
         long telegramUserId = getSenderTelegramId(update);
-        long userId = userService.getOrCreateUserByTelegramId(telegramUserId);
+        long userId = userService.getUserByTelegramId(telegramUserId).id();
         LocalDateTime startOfMonth = YearMonth.now().plusMonths(offset).atDay(1).atStartOfDay();
         LocalDateTime startOfNextMonth = startOfMonth.plusMonths(1);
 
