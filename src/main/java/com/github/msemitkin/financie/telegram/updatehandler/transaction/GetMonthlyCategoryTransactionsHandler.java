@@ -31,7 +31,7 @@ import static com.github.msemitkin.financie.telegram.util.JsonUtil.toJson;
 import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.TransactionUtil.getTransactionRepresentation;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
-import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
+import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getFrom;
 
 @Component
 public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler {
@@ -63,8 +63,9 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
         long categoryId = jsonObject.get("cat_id").getAsLong();
         int offset = jsonObject.get("offset").getAsInt();
         Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
-        long telegramUserId = getSenderTelegramId(update);
-        long userId = userService.getUserByTelegramId(telegramUserId).id();
+        long userTelegramId = getFrom(update).getId();
+        long chatId = getChatId(update);
+        long userId = userService.getUserByTelegramId(userTelegramId).id();
         LocalDateTime startOfMonth = YearMonth.now().plusMonths(offset).atDay(1).atStartOfDay();
         LocalDateTime startOfNextMonth = startOfMonth.plusMonths(1);
 
@@ -79,7 +80,7 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
 
         String message = getMessage(category.name(), totalInCategory);
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(transactionsInCategory);
-        editMessage(getChatId(update), messageId, message, keyboard);
+        editMessage(chatId, messageId, message, keyboard);
     }
 
     private static String getMessage(String category, Double totalInCategory) {

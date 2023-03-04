@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+import static com.github.msemitkin.financie.persistence.mapper.UserMapper.mapToUser;
+
 @Service
 public class UserService {
     private final UserRepository userRepository;
@@ -20,7 +22,7 @@ public class UserService {
         return mapToUser(userEntity);
     }
 
-    public User saveOrUpdateUser(@NonNull SaveOrUpdateUserCommand command) {
+    public void saveOrUpdateUser(@NonNull SaveOrUpdateUserCommand command) {
         UserEntity existingUserEntity = userRepository.getUserEntityByTelegramId(command.telegramId());
         Long existingUserId = Optional.ofNullable(existingUserEntity).map(UserEntity::getId).orElse(null);
         UserEntity userEntity = new UserEntity(
@@ -31,20 +33,6 @@ public class UserService {
             command.firstName(),
             command.lastName()
         );
-        UserEntity saved = userRepository.save(userEntity);
-
-        return mapToUser(saved);
-    }
-
-    @NonNull
-    private User mapToUser(@NonNull UserEntity userEntity) {
-        return new User(
-            userEntity.getId(),
-            userEntity.getTelegramId(),
-            userEntity.getTelegramChatId(),
-            userEntity.getTelegramUsername(),
-            userEntity.getFirstName(),
-            userEntity.getLastName()
-        );
+        userRepository.save(userEntity);
     }
 }

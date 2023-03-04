@@ -27,7 +27,7 @@ import java.util.stream.IntStream;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
-import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
+import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getFrom;
 
 @Component
 public class GetDailyTransactionsHandler extends AbstractQueryHandler {
@@ -51,9 +51,9 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
 
     @Override
     public void handleUpdate(Update update) {
-        long senderTelegramId = getSenderTelegramId(update);
-        long userId = userService.getUserByTelegramId(senderTelegramId).id();
         long chatId = getChatId(update);
+        long userTelegramId = getFrom(update).getId();
+        long userId = userService.getUserByTelegramId(userTelegramId).id();
         JsonObject payload = getCallbackData(update);
         long categoryId = payload.get("cat_id").getAsLong();
         int offset = payload.get("offset").getAsInt();

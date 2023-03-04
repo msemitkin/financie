@@ -12,13 +12,13 @@ public class UpdateUtil {
     private UpdateUtil() {
     }
 
-    public static long getChatId(@NonNull Update update) {
+    public static Long getChatId(@NonNull Update update) {
         return Optional.ofNullable(update.getMessage())
             .map(Message::getChatId)
             .orElseGet(() -> Optional.ofNullable(update.getCallbackQuery())
                 .map(CallbackQuery::getMessage)
                 .map(Message::getChatId)
-                .orElseThrow());
+                .orElse(null));
     }
 
     public static long getSenderTelegramId(@NonNull Update update) {
@@ -30,5 +30,14 @@ public class UpdateUtil {
                 .map(Message::getFrom)
                 .map(User::getId)
                 .orElseThrow());
+    }
+
+    public static User getFrom(@NonNull Update update) {
+        return Optional.ofNullable(update.getCallbackQuery())
+            .map(CallbackQuery::getFrom)
+            .orElseGet(() -> Optional
+                .ofNullable(update.getMessage())
+                .map(Message::getFrom)
+                .orElse(null));
     }
 }
