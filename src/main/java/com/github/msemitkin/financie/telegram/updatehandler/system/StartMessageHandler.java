@@ -40,6 +40,8 @@ public class StartMessageHandler extends AbstractTextCommandHandler {
             //TODO customize message for new and existing users
             .text("""
                 We're so happy to have you on board with Financie!
+                If you're new here, please use our /help command to get a brief overview \
+                of the available features and how to use them. \
                 If you have any questions or feedback, please don't hesitate to reach out. \
                 Our friendly team is always here to help! \uD83D\uDE0A
                 """)
