@@ -1,5 +1,6 @@
 package com.github.msemitkin.financie.telegram.updatehandler.categories.monthly;
 
+import com.github.msemitkin.financie.domain.AveragePerDayService;
 import com.github.msemitkin.financie.domain.CategoryStatistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.UserService;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.github.msemitkin.financie.domain.StatisticsUtil.sum;
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
@@ -31,17 +33,21 @@ public class MonthlyCategoriesResponseService {
     private final UserService userService;
     private final StatisticsService statisticsService;
     private final CallbackService callbackService;
+    private final AveragePerDayService averagePerDayService;
     private final int maxNumberOfStatisticsRecords;
 
     public MonthlyCategoriesResponseService(
         UserService userService,
         StatisticsService statisticsService,
         CallbackService callbackService,
-        @Value("${com.github.msemitkin.financie.statistics.max-number-of-displayed-records}") int maxNumberOfStatisticsRecords
+        AveragePerDayService averagePerDayService,
+        @Value("${com.github.msemitkin.financie.statistics.max-number-of-displayed-records}")
+        int maxNumberOfStatisticsRecords
     ) {
         this.userService = userService;
         this.statisticsService = statisticsService;
         this.callbackService = callbackService;
+        this.averagePerDayService = averagePerDayService;
         this.maxNumberOfStatisticsRecords = maxNumberOfStatisticsRecords;
     }
 
@@ -60,10 +66,11 @@ public class MonthlyCategoriesResponseService {
             return new Response(text, InlineKeyboardMarkup.builder().keyboardRow(getPageButtons(monthOffset)).build());
         }
 
-        Double total = statistics.stream().reduce(0.0, (result, stat) -> result + stat.amount(), Double::sum);
+        double total = sum(statistics);
+        double averagePerDay = averagePerDayService.getAveragePerDay(total, YearMonth.now().plusMonths(monthOffset));
 
         InlineKeyboardMarkup keyboard = getKeyboard(statistics, monthOffset);
-        String text = getText(total, month);
+        String text = getText(total, averagePerDay, month);
         return new Response(text, keyboard);
     }
 
@@ -87,10 +94,11 @@ public class MonthlyCategoriesResponseService {
         return callbackId.toString();
     }
 
-    private String getText(double total, String month) {
+    private String getText(double total, double average, String month) {
         return """
             Total spent in %s: `%s`
-            Top categories:""".formatted(month, formatNumber(total));
+            Average per day: `%s`
+            Top categories:""".formatted(month, formatNumber(total), formatNumber(average));
     }
 
     private InlineKeyboardMarkup getKeyboard(List<CategoryStatistics> statistics, int monthOffset) {
