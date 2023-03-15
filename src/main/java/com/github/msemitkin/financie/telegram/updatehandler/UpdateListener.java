@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.lang.NonNull;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -34,6 +35,7 @@ public class UpdateListener {
         this.userService = userService;
     }
 
+    @Async
     @EventListener(UpdateReceivedEvent.class)
     public void onUpdateReceived(UpdateReceivedEvent event) {
         Update update = event.getUpdate();
