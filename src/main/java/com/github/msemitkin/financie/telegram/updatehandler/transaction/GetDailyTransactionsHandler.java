@@ -10,8 +10,8 @@ import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
 import com.github.msemitkin.financie.telegram.callback.CallbackType;
-import com.github.msemitkin.financie.telegram.callback.command.DeleteTransactionCommand;
 import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoryTransactionsCommand;
+import com.github.msemitkin.financie.telegram.callback.command.GetTransactionActionsCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -98,22 +98,17 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
                 Transaction tran = transactions.get(index);
                 String text = "%d. %s : %s".formatted(
                     transactions.size() - index, tran.category(), formatNumber(tran.amount()));
-                var deleteTransactionCallback = new Callback<>(
-                    CallbackType.DELETE_TRANSACTION,
-                    new DeleteTransactionCommand(tran.id())
+                var callback = new Callback<>(
+                    CallbackType.GET_TRANSACTION_ACTIONS,
+                    new GetTransactionActionsCommand(tran.id())
                 );
-                UUID deleteTransactionCallbackId = callbackService.saveCallback(deleteTransactionCallback);
-                return List.of(
-                    InlineKeyboardButton.builder()
-                        .text(text)
-                        .callbackData("-1")
-                        .build(),
-                    InlineKeyboardButton.builder()
-                        .text("❌")
-                        .callbackData(deleteTransactionCallbackId.toString())
-                        .build()
-                );
+                UUID callbackId = callbackService.saveCallback(callback);
+                return InlineKeyboardButton.builder()
+                    .text(text)
+                    .callbackData(callbackId.toString())
+                    .build();
             })
+            .map(List::of)
             .toList();
     }
 

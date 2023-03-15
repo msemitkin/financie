@@ -9,8 +9,8 @@ import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
 import com.github.msemitkin.financie.telegram.callback.CallbackType;
-import com.github.msemitkin.financie.telegram.callback.command.DeleteTransactionCommand;
 import com.github.msemitkin.financie.telegram.callback.command.GetMonthlyCategoryTransactionsCommand;
+import com.github.msemitkin.financie.telegram.callback.command.GetTransactionActionsCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
 import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Value;
@@ -100,21 +100,16 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
         List<List<InlineKeyboardButton>> rows = transactionsInCategory.stream()
             .map(transaction -> {
                 var callback = new Callback<>(
-                    CallbackType.DELETE_TRANSACTION,
-                    new DeleteTransactionCommand(transaction.id())
+                    CallbackType.GET_TRANSACTION_ACTIONS,
+                    new GetTransactionActionsCommand(transaction.id())
                 );
-                UUID deleteTransactionCallbackId = callbackService.saveCallback(callback);
-                return List.of(
-                    InlineKeyboardButton.builder()
-                        .text(getTransactionRepresentation(transaction))
-                        .callbackData("-1")
-                        .build(),
-                    InlineKeyboardButton.builder()
-                        .text("❌")
-                        .callbackData(deleteTransactionCallbackId.toString())
-                        .build()
-                );
+                UUID callbackId = callbackService.saveCallback(callback);
+                return InlineKeyboardButton.builder()
+                    .text(getTransactionRepresentation(transaction))
+                    .callbackData(callbackId.toString())
+                    .build();
             })
+            .map(List::of)
             .limit(maxNumberOfStatisticsRecords)
             .toList();
         return InlineKeyboardMarkup.builder()

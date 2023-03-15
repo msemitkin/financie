@@ -42,13 +42,7 @@ public abstract class AbstractQueryHandler implements UpdateHandler {
     private UUID getCallbackId(Update update) {
         return Optional.ofNullable(update.getCallbackQuery())
             .map(CallbackQuery::getData)
-            .map(string -> {
-                try {
-                    return UUID.fromString(string);
-                } catch (IllegalArgumentException e) {
-                    return null;
-                }
-            })
+            .map(UUID::fromString)
             .orElse(null);
     }
 
