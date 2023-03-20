@@ -1,5 +1,6 @@
 package com.github.msemitkin.financie.telegram.updatehandler.import_;
 
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
 import org.slf4j.Logger;
@@ -46,16 +47,7 @@ public class ImportHandler extends AbstractTextCommandHandler {
         Long chatId = requireNonNull(getChatId(update));
         telegramApi.execute(SendMessage.builder()
             .chatId(chatId)
-            .text("""
-                Hey there!
-                To import your transactions, simply upload a CSV file with the \
-                'amount', 'category', 'datetime' (in the 'yyyy-MM-dd HH:mm' format) columns  using the \
-                paperclip icon, and the bot will handle the rest!
-                                
-                Please, note that recording of savings is not supported yet.
-                                
-                Below is a template you can use
-                """)
+            .text(ResourceService.getValue("csv-offer-template-message"))
             .build());
         try (InputStream is = resourceLoader.getResource(templatePath).getInputStream()) {
             InputFile template = new InputFile(is, outputFileName);

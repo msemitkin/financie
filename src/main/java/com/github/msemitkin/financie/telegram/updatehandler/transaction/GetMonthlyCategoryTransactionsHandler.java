@@ -5,6 +5,7 @@ import com.github.msemitkin.financie.domain.CategoryService;
 import com.github.msemitkin.financie.domain.Transaction;
 import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.domain.UserService;
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
@@ -13,6 +14,7 @@ import com.github.msemitkin.financie.telegram.callback.command.GetMonthlyCategor
 import com.github.msemitkin.financie.telegram.callback.command.GetTransactionActionsCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
 import jakarta.annotation.Nullable;
+import org.apache.commons.text.StringSubstitutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -27,6 +29,7 @@ import java.time.Month;
 import java.time.YearMonth;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
@@ -89,11 +92,11 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
 
     private static String getMessage(String category, Double totalInCategory) {
         Month month = LocalDate.now().getMonth();
-        return escapeMarkdownV2("""
-            Top transactions in %s
-            *Category: %s*
-            Spent in the category: `%s`""".formatted(formatMonth(month), category, formatNumber(totalInCategory))
+        String message = StringSubstitutor.replace(
+            ResourceService.getValue("transactions-for-month-in-category"),
+            Map.of("month", formatMonth(month), "category", category, "total", formatNumber(totalInCategory))
         );
+        return escapeMarkdownV2(message);
     }
 
     private InlineKeyboardMarkup getKeyboardMarkup(List<Transaction> transactionsInCategory) {

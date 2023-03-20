@@ -4,12 +4,14 @@ import com.github.msemitkin.financie.domain.CategoryStatistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.StatisticsUtil;
 import com.github.msemitkin.financie.domain.UserService;
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
 import com.github.msemitkin.financie.telegram.callback.CallbackType;
 import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoriesCommand;
 import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoryTransactionsCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.categories.Response;
+import org.apache.commons.text.StringSubstitutor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -18,6 +20,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,6 +35,15 @@ class DailyCategoriesResponseService {
     private final StatisticsService statisticsService;
     private final UserService userService;
     private final CallbackService callbackService;
+
+    private final String noTransactionsTodayMessage = ResourceService.getValue("no-transactions-today");
+    private final String noTransactionsOnDateMessageTemplate = ResourceService.getValue("no-transactions-on-date");
+    private final String totalOnDateMessageTemplate = ResourceService.getValue("total-on-date");
+
+    private final String leftButtonText = ResourceService.getValue("button.left");
+    private final String rightButtonText = ResourceService.getValue("button.right");
+
+    private final String categoryTransactionFormat = ResourceService.getValue("category-transaction-format");
 
     DailyCategoriesResponseService(
         StatisticsService statisticsService,
@@ -48,16 +60,21 @@ class DailyCategoriesResponseService {
         long userId = userService.getUserByTelegramId(getSenderTelegramId(update)).id();
         List<CategoryStatistics> statistics = getDailyCategories(userId, dayOffset);
         if (statistics.isEmpty()) {
-            String message = "No transactions " +
-                             (dayOffset == 0 ? "today" : "on " + formatDate(LocalDate.now().plusDays(dayOffset)));
+
+            String message = dayOffset == 0
+                ? noTransactionsTodayMessage
+                : StringSubstitutor.replace(noTransactionsOnDateMessageTemplate,
+                Map.of("date", formatDate(LocalDate.now().plusDays(dayOffset)))
+            );
             var keyboardMarkup = InlineKeyboardMarkup.builder().keyboardRow(getPageButtons(dayOffset)).build();
             return new Response(escapeMarkdownV2(message), keyboardMarkup);
         } else {
             double total = StatisticsUtil.sum(statistics);
-            String message = escapeMarkdownV2("""
-                %s
-                Total: `%s`
-                """.formatted(formatDate(LocalDate.now().plusDays(dayOffset)), formatNumber(total)));
+            String message = StringSubstitutor.replace(
+                totalOnDateMessageTemplate,
+                Map.of("date", formatDate(LocalDate.now().plusDays(dayOffset)), "amount", formatNumber(total))
+            );
+            message = escapeMarkdownV2(message);
             var keyboardMarkup = InlineKeyboardMarkup.builder().keyboard(getKeyboard(statistics, dayOffset)).build();
             return new Response(message, keyboardMarkup);
         }
@@ -72,8 +89,8 @@ class DailyCategoriesResponseService {
     }
 
     private List<InlineKeyboardButton> getPageButtons(int dayOffset) {
-        var leftButton = button("⬅️", getPageButtonCallbackData(dayOffset - 1));
-        var rightButton = button("➡️", getPageButtonCallbackData(dayOffset + 1));
+        var leftButton = button(leftButtonText, getPageButtonCallbackData(dayOffset - 1));
+        var rightButton = button(rightButtonText, getPageButtonCallbackData(dayOffset + 1));
         return dayOffset == 0 ? List.of(leftButton) : List.of(leftButton, rightButton);
     }
 
@@ -97,8 +114,12 @@ class DailyCategoriesResponseService {
                     new GetDailyCategoryTransactionsCommand(tran.categoryId(), dayOffset)
                 );
                 UUID callbackId = callbackService.saveCallback(callback);
+                var text = StringSubstitutor.replace(
+                    categoryTransactionFormat,
+                    Map.of("category", tran.categoryName(), "amount", formatNumber(tran.amount()))
+                );
                 return InlineKeyboardButton.builder()
-                    .text("%s : %s".formatted(tran.categoryName(), formatNumber(tran.amount())))
+                    .text(text)
                     .callbackData(callbackId.toString())
                     .build();
             })

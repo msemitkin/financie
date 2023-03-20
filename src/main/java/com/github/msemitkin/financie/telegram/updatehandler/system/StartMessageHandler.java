@@ -1,5 +1,6 @@
 package com.github.msemitkin.financie.telegram.updatehandler.system;
 
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
@@ -30,21 +31,15 @@ public class StartMessageHandler extends AbstractTextCommandHandler {
     private void sendWelcomeMessage(Long chatId) {
         ReplyKeyboardMarkup markup = ReplyKeyboardMarkup.builder()
             .keyboardRow(new KeyboardRow(List.of(
-                KeyboardButton.builder().text(BotCommand.TODAY.getCommand()).build(),
-                KeyboardButton.builder().text(BotCommand.MONTHLY_STATISTICS.getCommand()).build()
+                KeyboardButton.builder().text(ResourceService.getValue("button.today")).build(),
+                KeyboardButton.builder().text(ResourceService.getValue("button.this-month")).build()
             )))
             .resizeKeyboard(true)
             .build();
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)
             //TODO customize message for new and existing users
-            .text("""
-                We're so happy to have you on board with Financie!
-                If you're new here, please use our /help command to get a brief overview \
-                of the available features and how to use them. \
-                If you have any questions or feedback, please don't hesitate to reach out. \
-                Our friendly team is always here to help! \uD83D\uDE0A
-                """)
+            .text(ResourceService.getValue("welcome-message"))
             .replyMarkup(markup)
             .build();
         telegramApi.execute(sendMessage);

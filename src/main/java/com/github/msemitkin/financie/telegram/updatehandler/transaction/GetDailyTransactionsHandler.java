@@ -6,6 +6,7 @@ import com.github.msemitkin.financie.domain.Transaction;
 import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.domain.TransactionUtil;
 import com.github.msemitkin.financie.domain.UserService;
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
@@ -13,6 +14,7 @@ import com.github.msemitkin.financie.telegram.callback.CallbackType;
 import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoryTransactionsCommand;
 import com.github.msemitkin.financie.telegram.callback.command.GetTransactionActionsCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
+import org.apache.commons.text.StringSubstitutor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
@@ -25,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -75,17 +78,21 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
             telegramApi.execute(EditMessageText.builder()
                 .chatId(chatId)
                 .messageId(messageId)
-                .text("No transactions today")
+                .text(ResourceService.getValue("no-transactions-today"))
                 .parseMode(ParseMode.MARKDOWNV2)
                 .replyMarkup(InlineKeyboardMarkup.builder().keyboard(Collections.emptyList()).build())
                 .build());
         } else {
             double total = TransactionUtil.sum(transactions);
             List<List<InlineKeyboardButton>> rows = getKeyboard(transactions);
+            String text = StringSubstitutor.replace(
+                ResourceService.getValue("transactions-for-day-in-category"),
+                Map.of("category", category.name(), "total", formatNumber(total))
+            );
             telegramApi.execute(EditMessageText.builder()
                 .chatId(chatId)
                 .messageId(messageId)
-                .text("Today in category *%s*: `%s`".formatted(category.name(), formatNumber(total)))
+                .text(text)
                 .parseMode(ParseMode.MARKDOWNV2)
                 .replyMarkup(InlineKeyboardMarkup.builder().keyboard(rows).build())
                 .build());

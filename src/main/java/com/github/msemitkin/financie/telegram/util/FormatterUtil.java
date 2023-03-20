@@ -12,6 +12,7 @@ public class FormatterUtil {
     private FormatterUtil() {
     }
 
+    //TODO with locale
     @NonNull
     public static String formatDate(@NonNull LocalDate date) {
         return date.format(DateTimeFormatter.ISO_DATE);

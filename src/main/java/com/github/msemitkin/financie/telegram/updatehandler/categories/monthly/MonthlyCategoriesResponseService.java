@@ -4,12 +4,14 @@ import com.github.msemitkin.financie.domain.AveragePerDayService;
 import com.github.msemitkin.financie.domain.CategoryStatistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.UserService;
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
 import com.github.msemitkin.financie.telegram.callback.CallbackType;
 import com.github.msemitkin.financie.telegram.callback.command.GetMonthlyCategoriesCommand;
 import com.github.msemitkin.financie.telegram.callback.command.GetMonthlyCategoryTransactionsCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.categories.Response;
+import org.apache.commons.text.StringSubstitutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -20,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -62,7 +65,10 @@ public class MonthlyCategoriesResponseService {
         String month = formatMonth(startOfMonth.getMonth());
 
         if (statistics.isEmpty()) {
-            String text = "No transactions in " + month;
+            var text = StringSubstitutor.replace(
+                ResourceService.getValue("no-transactions-in-month"),
+                Map.of("month", month)
+            );
             return new Response(text, InlineKeyboardMarkup.builder().keyboardRow(getPageButtons(monthOffset)).build());
         }
 
@@ -76,8 +82,13 @@ public class MonthlyCategoriesResponseService {
 
 
     private List<InlineKeyboardButton> getPageButtons(int monthOffset) {
-        var leftButton = button("⬅️", getPageButtonCallbackData(monthOffset - 1));
-        var rightButton = button("➡️", getPageButtonCallbackData(monthOffset + 1));
+        var leftButton = button(
+            ResourceService.getValue("button.left"),
+            getPageButtonCallbackData(monthOffset - 1));
+        var rightButton = button(
+            ResourceService.getValue("button.right"),
+            getPageButtonCallbackData(monthOffset + 1)
+        );
         return monthOffset == 0 ? List.of(leftButton) : List.of(leftButton, rightButton);
     }
 
@@ -95,10 +106,10 @@ public class MonthlyCategoriesResponseService {
     }
 
     private String getText(double total, double average, String month) {
-        return """
-            Total spent in %s: `%s`
-            Average per day: `%s`
-            Top categories:""".formatted(month, formatNumber(total), formatNumber(average));
+        return StringSubstitutor.replace(
+            ResourceService.getValue("total-in-month"),
+            Map.of("month", month, "total", formatNumber(total), "average", formatNumber(average))
+        );
     }
 
     private InlineKeyboardMarkup getKeyboard(List<CategoryStatistics> statistics, int monthOffset) {

@@ -2,6 +2,7 @@ package com.github.msemitkin.financie.telegram.updatehandler.import_;
 
 import com.github.msemitkin.financie.csvimport.CsvFileHistoryImportService;
 import com.github.msemitkin.financie.domain.UserService;
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.updatehandler.UpdateHandler;
 import org.slf4j.Logger;
@@ -50,10 +51,7 @@ public class CsvFileHandler implements UpdateHandler {
     public void handleUpdate(Update update) {
         Long chatId = update.getMessage().getChatId();
         Integer messageId = update.getMessage().getMessageId();
-        sendMessage(chatId, messageId, """
-            Got it! We're processing your file now. This might take a few moments, \
-            so sit back and relax while we work our magic. We'll let you know once finished
-            """);
+        sendMessage(chatId, messageId, ResourceService.getValue("csv-on-upload-reply-message"));
         try {
             long senderTelegramId = getFrom(update).getId();
             long userId = userService.getUserByTelegramId(senderTelegramId).id();
@@ -63,12 +61,11 @@ public class CsvFileHandler implements UpdateHandler {
 
             csvFileHistoryImportService.importTransactions(userId, bytes);
 
-            sendMessage(chatId, messageId, "Your file has been processed!");
+            sendMessage(chatId, messageId, ResourceService.getValue("csv-file-processed-message"));
         } catch (Exception e) {
             logger.info("Failed to import transactions", e);
 
-            sendMessage(chatId, messageId,
-                "Failed to import transactions, please check file format and try again");
+            sendMessage(chatId, messageId, ResourceService.getValue("csv-failed-to-process-file-message"));
         }
     }
 

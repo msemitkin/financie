@@ -1,5 +1,6 @@
 package com.github.msemitkin.financie.telegram.command;
 
+import com.github.msemitkin.financie.resources.ResourceService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -18,7 +19,7 @@ public class CommandsConfig {
     public BotCommand startCommand() {
         return BotCommand.builder()
             .command(START.getCommand())
-            .description("Restart bot")
+            .description(ResourceService.getValue(START.getDescriptionCode()))
             .build();
     }
 
@@ -27,7 +28,7 @@ public class CommandsConfig {
     public BotCommand helpCommand() {
         return BotCommand.builder()
             .command(HELP.getCommand())
-            .description("Help")
+            .description(ResourceService.getValue(HELP.getDescriptionCode()))
             .build();
     }
 
@@ -36,7 +37,7 @@ public class CommandsConfig {
     public BotCommand importCommand() {
         return BotCommand.builder()
             .command(IMPORT.getCommand())
-            .description("Import transactions")
+            .description(ResourceService.getValue(IMPORT.getDescriptionCode()))
             .build();
     }
 
@@ -46,7 +47,7 @@ public class CommandsConfig {
     public BotCommand authorCommand() {
         return BotCommand.builder()
             .command(AUTHOR.getCommand())
-            .description("Who created the bot")
+            .description(ResourceService.getValue(AUTHOR.getDescriptionCode()))
             .build();
     }
 

@@ -26,6 +26,9 @@ dependencies {
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")
+
+    implementation("org.apache.commons:commons-text:1.10.0")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 
     testImplementation(platform("org.testcontainers:testcontainers-bom:1.17.6"))
