@@ -2,6 +2,7 @@ package com.github.msemitkin.financie.telegram.updatehandler.system;
 
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
 import com.github.msemitkin.financie.telegram.util.MarkdownUtil;
@@ -25,7 +26,8 @@ public class AuthorHandler extends AbstractTextCommandHandler {
     @Override
     public void handleUpdate(Update update) {
         Long chatId = requireNonNull(getChatId(update));
-        String text = MarkdownUtil.escapeMarkdownV2(ResourceService.getValue("author-message"));
+        String text = MarkdownUtil.escapeMarkdownV2(
+            ResourceService.getValue("author-message", UserContextHolder.getContext().locale()));
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)
             .text(text)

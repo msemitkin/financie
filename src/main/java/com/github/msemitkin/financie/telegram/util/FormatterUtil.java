@@ -20,8 +20,9 @@ public class FormatterUtil {
     }
 
     @NonNull
-    public static String formatMonth(@NonNull Month month) {
-        return StringUtils.capitalize(month.getDisplayName(TextStyle.FULL_STANDALONE, Locale.getDefault()));
+    public static String formatMonth(@NonNull Month month, @NonNull Locale locale) {
+        String result = month.getDisplayName(TextStyle.FULL_STANDALONE, locale);
+        return StringUtils.capitalize(result);
     }
 
     @NonNull

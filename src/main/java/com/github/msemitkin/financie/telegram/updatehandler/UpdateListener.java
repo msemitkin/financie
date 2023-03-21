@@ -1,7 +1,10 @@
 package com.github.msemitkin.financie.telegram.updatehandler;
 
 import com.github.msemitkin.financie.domain.UserService;
+import com.github.msemitkin.financie.locale.SupportedLanguageChecker;
 import com.github.msemitkin.financie.telegram.UpdateReceivedEvent;
+import com.github.msemitkin.financie.telegram.auth.UserContext;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.transaction.UserMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +16,8 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getFrom;
@@ -38,9 +43,26 @@ public class UpdateListener {
     @Async
     @EventListener(UpdateReceivedEvent.class)
     public void onUpdateReceived(UpdateReceivedEvent event) {
-        Update update = event.getUpdate();
-        updateUser(update);
+        try {
+            Update update = event.getUpdate();
+            updateUser(update);
+            Locale userLocale = Optional.ofNullable(getFrom(update))
+                .map(User::getLanguageCode)
+                .filter(SupportedLanguageChecker::isSupported)
+                .map(Locale::new)
+                .orElse(Locale.getDefault());
+            UserContextHolder.setContext(new UserContext(userLocale));
 
+            processEvent(event);
+        } catch (Exception e) {
+            logger.error("Unhandled exception", e);
+        } finally {
+            UserContextHolder.clearContext();
+        }
+    }
+
+    private void processEvent(UpdateReceivedEvent event) {
+        Update update = event.getUpdate();
         updateHandlers.stream()
             .filter(updateHandler -> updateHandler.canHandle(update))
             .findFirst()
@@ -55,6 +77,7 @@ public class UpdateListener {
             userService.saveOrUpdateUser(UserMapper.toSaveOrUpdateUserCommand(from, chatId));
         } else {
             logger.info("Failed to update user info: {}", update);
+            throw new RuntimeException();
         }
     }
 }

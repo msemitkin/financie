@@ -8,6 +8,7 @@ import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.MessageException;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.transaction.IncomingTransaction;
 import com.github.msemitkin.financie.telegram.transaction.TransactionCommandValidator;
 import com.github.msemitkin.financie.telegram.transaction.TransactionParser;
@@ -102,7 +103,7 @@ public class SaveTransactionHandler implements UpdateHandler {
         Statistics monthlyStatistics = statisticsService
             .getStatistics(userId, category, YearMonth.now().atDay(1).atStartOfDay(), LocalDateTime.now());
         String reply = StringSubstitutor.replace(
-            ResourceService.getValue("transaction-saved-reply"),
+            ResourceService.getValue("transaction-saved-reply", UserContextHolder.getContext().locale()),
             Map.of(
                 "today", formatNumber(dailyStatistics.total()),
                 "this_month", formatNumber(monthlyStatistics.total()),

@@ -2,6 +2,7 @@ package com.github.msemitkin.financie.telegram.updatehandler;
 
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -30,7 +31,7 @@ public class DefaultUpdateHandler {
             .map(Message::getMessageId)
             .orElse(null);
 
-        String sorryMessage = ResourceService.getValue("sorry-message");
+        String sorryMessage = ResourceService.getValue("sorry-message", UserContextHolder.getContext().locale());
         long chatId = requireNonNull(getChatId(update));
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)

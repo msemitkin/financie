@@ -2,6 +2,7 @@ package com.github.msemitkin.financie.telegram.updatehandler.import_;
 
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class ImportHandler extends AbstractTextCommandHandler {
         Long chatId = requireNonNull(getChatId(update));
         telegramApi.execute(SendMessage.builder()
             .chatId(chatId)
-            .text(ResourceService.getValue("csv-offer-template-message"))
+            .text(ResourceService.getValue("csv-offer-template-message", UserContextHolder.getContext().locale()))
             .build());
         try (InputStream is = resourceLoader.getResource(templatePath).getInputStream()) {
             InputFile template = new InputFile(is, outputFileName);

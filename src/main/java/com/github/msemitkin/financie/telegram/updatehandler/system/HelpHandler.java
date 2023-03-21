@@ -2,6 +2,7 @@ package com.github.msemitkin.financie.telegram.updatehandler.system;
 
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
 import com.github.msemitkin.financie.telegram.util.MarkdownUtil;
@@ -28,7 +29,8 @@ public class HelpHandler extends AbstractTextCommandHandler {
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)
             .parseMode(ParseMode.MARKDOWNV2)
-            .text(MarkdownUtil.escapeMarkdownV2(ResourceService.getValue("help-message")))
+            .text(MarkdownUtil.escapeMarkdownV2(
+                ResourceService.getValue("help-message", UserContextHolder.getContext().locale())))
             .build();
         telegramApi.execute(sendMessage);
     }

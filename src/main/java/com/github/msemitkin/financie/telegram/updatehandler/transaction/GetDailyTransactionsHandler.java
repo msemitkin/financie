@@ -8,6 +8,7 @@ import com.github.msemitkin.financie.domain.TransactionUtil;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
 import com.github.msemitkin.financie.telegram.callback.CallbackType;
@@ -78,7 +79,7 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
             telegramApi.execute(EditMessageText.builder()
                 .chatId(chatId)
                 .messageId(messageId)
-                .text(ResourceService.getValue("no-transactions-today"))
+                .text(ResourceService.getValue("no-transactions-today", UserContextHolder.getContext().locale()))
                 .parseMode(ParseMode.MARKDOWNV2)
                 .replyMarkup(InlineKeyboardMarkup.builder().keyboard(Collections.emptyList()).build())
                 .build());
@@ -86,7 +87,7 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
             double total = TransactionUtil.sum(transactions);
             List<List<InlineKeyboardButton>> rows = getKeyboard(transactions);
             String text = StringSubstitutor.replace(
-                ResourceService.getValue("transactions-for-day-in-category"),
+                ResourceService.getValue("transactions-for-day-in-category", UserContextHolder.getContext().locale()),
                 Map.of("category", category.name(), "total", formatNumber(total))
             );
             telegramApi.execute(EditMessageText.builder()

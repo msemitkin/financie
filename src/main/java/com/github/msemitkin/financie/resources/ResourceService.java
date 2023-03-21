@@ -15,6 +15,12 @@ public class ResourceService {
     }
 
     @NonNull
+    public static String getValue(String key, Locale locale) {
+        return ResourceBundle.getBundle("texts", locale).getString(key);
+    }
+
+    @NonNull
+    @Deprecated
     public static String getValue(String key) {
         return BUNDLE.getString(key);
     }

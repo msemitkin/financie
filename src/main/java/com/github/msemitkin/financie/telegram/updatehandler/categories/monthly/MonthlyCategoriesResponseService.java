@@ -5,6 +5,7 @@ import com.github.msemitkin.financie.domain.CategoryStatistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
 import com.github.msemitkin.financie.telegram.callback.CallbackType;
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -59,34 +61,38 @@ public class MonthlyCategoriesResponseService {
         long userTelegramId = getSenderTelegramId(update);
         long userId = userService.getUserByTelegramId(userTelegramId).id();
 
+        Locale locale = UserContextHolder.getContext().locale();
+
         LocalDateTime startOfMonth = YearMonth.now().plusMonths(monthOffset).atDay(1).atStartOfDay();
         LocalDateTime startOfNextMonth = startOfMonth.plusMonths(1);
         List<CategoryStatistics> statistics = statisticsService.getStatistics(userId, startOfMonth, startOfNextMonth);
-        String month = formatMonth(startOfMonth.getMonth());
+        String month = formatMonth(startOfMonth.getMonth(), locale);
 
         if (statistics.isEmpty()) {
             var text = StringSubstitutor.replace(
-                ResourceService.getValue("no-transactions-in-month"),
+                ResourceService.getValue("no-transactions-in-month", locale),
                 Map.of("month", month)
             );
-            return new Response(text, InlineKeyboardMarkup.builder().keyboardRow(getPageButtons(monthOffset)).build());
+            return new Response(text, InlineKeyboardMarkup.builder()
+                .keyboardRow(getPageButtons(monthOffset, locale))
+                .build());
         }
 
         double total = sum(statistics);
         double averagePerDay = averagePerDayService.getAveragePerDay(total, YearMonth.now().plusMonths(monthOffset));
 
-        InlineKeyboardMarkup keyboard = getKeyboard(statistics, monthOffset);
-        String text = getText(total, averagePerDay, month);
+        InlineKeyboardMarkup keyboard = getKeyboard(statistics, monthOffset, locale);
+        String text = getText(total, averagePerDay, month, locale);
         return new Response(text, keyboard);
     }
 
 
-    private List<InlineKeyboardButton> getPageButtons(int monthOffset) {
+    private List<InlineKeyboardButton> getPageButtons(int monthOffset, Locale locale) {
         var leftButton = button(
-            ResourceService.getValue("button.left"),
+            ResourceService.getValue("button.left", locale),
             getPageButtonCallbackData(monthOffset - 1));
         var rightButton = button(
-            ResourceService.getValue("button.right"),
+            ResourceService.getValue("button.right", locale),
             getPageButtonCallbackData(monthOffset + 1)
         );
         return monthOffset == 0 ? List.of(leftButton) : List.of(leftButton, rightButton);
@@ -105,14 +111,14 @@ public class MonthlyCategoriesResponseService {
         return callbackId.toString();
     }
 
-    private String getText(double total, double average, String month) {
+    private String getText(double total, double average, String month, Locale locale) {
         return StringSubstitutor.replace(
-            ResourceService.getValue("total-in-month"),
+            ResourceService.getValue("total-in-month", locale),
             Map.of("month", month, "total", formatNumber(total), "average", formatNumber(average))
         );
     }
 
-    private InlineKeyboardMarkup getKeyboard(List<CategoryStatistics> statistics, int monthOffset) {
+    private InlineKeyboardMarkup getKeyboard(List<CategoryStatistics> statistics, int monthOffset, Locale locale) {
         List<List<InlineKeyboardButton>> rows = statistics.stream()
             .map(stats -> {
                 String text = "%s: %s".formatted(formatNumber(stats.amount()), stats.categoryName());
@@ -126,7 +132,7 @@ public class MonthlyCategoriesResponseService {
             .map(List::of)
             .limit(maxNumberOfStatisticsRecords)
             .collect(Collectors.toCollection(ArrayList::new));
-        rows.add(getPageButtons(monthOffset));
+        rows.add(getPageButtons(monthOffset, locale));
         return InlineKeyboardMarkup.builder().keyboard(rows).build();
     }
 }
