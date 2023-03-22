@@ -1,14 +1,16 @@
 package com.github.msemitkin.financie.telegram.updatehandler.system;
 
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
+import com.github.msemitkin.financie.telegram.util.MarkdownUtil;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static java.util.Objects.requireNonNull;
 
@@ -24,12 +26,8 @@ public class AuthorHandler extends AbstractTextCommandHandler {
     @Override
     public void handleUpdate(Update update) {
         Long chatId = requireNonNull(getChatId(update));
-        String text = escapeMarkdownV2("""
-            Oopsie daisy! It looks like our team of highly trained monkeys forgot to add the information \
-            about the author.
-            Don't worry though, they're working on it right now and it'll be added soon.
-            Thanks for your patience and please don't feed the monkeys!
-            """);
+        String text = MarkdownUtil.escapeMarkdownV2(
+            ResourceService.getValue("author-message", UserContextHolder.getContext().locale()));
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)
             .text(text)

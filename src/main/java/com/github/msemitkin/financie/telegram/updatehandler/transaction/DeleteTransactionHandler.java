@@ -2,7 +2,9 @@ package com.github.msemitkin.financie.telegram.updatehandler.transaction;
 
 import com.github.msemitkin.financie.domain.Transaction;
 import com.github.msemitkin.financie.domain.TransactionService;
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
 import com.github.msemitkin.financie.telegram.callback.CallbackType;
 import com.github.msemitkin.financie.telegram.callback.command.DeleteTransactionCommand;
@@ -40,10 +42,12 @@ public class DeleteTransactionHandler extends AbstractQueryHandler {
         Transaction transaction = transactionService.getTransaction(transactionId);
         transactionService.deleteTransaction(transactionId);
 
+        String text = ResourceService.getValue("transaction-deleted-reply", UserContextHolder.getContext().locale())
+            .concat("\n").concat(getTransactionRepresentation(transaction));
         EditMessageText editMessageText = EditMessageText.builder()
             .chatId(chatId)
             .messageId(messageId)
-            .text("Deleted transaction%n%s".formatted(getTransactionRepresentation(transaction)))
+            .text(text)
             .replyMarkup(InlineKeyboardMarkup.builder().keyboard(emptyList()).build())
             .build();
         telegramApi.execute(editMessageText);

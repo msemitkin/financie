@@ -16,7 +16,8 @@ public class UserMapper {
             userEntity.getTelegramChatId(),
             userEntity.getTelegramUsername(),
             userEntity.getFirstName(),
-            userEntity.getLastName()
+            userEntity.getLastName(),
+            userEntity.getLanguageCode()
         );
     }
 }

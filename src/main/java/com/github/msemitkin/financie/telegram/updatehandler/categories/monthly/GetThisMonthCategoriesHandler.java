@@ -1,8 +1,8 @@
 package com.github.msemitkin.financie.telegram.updatehandler.categories.monthly;
 
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.callback.command.GetMonthlyCategoriesCommand;
-import com.github.msemitkin.financie.telegram.command.BotCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
@@ -22,7 +22,7 @@ public class GetThisMonthCategoriesHandler extends AbstractTextCommandHandler {
         TelegramApi telegramApi,
         MonthlyCategoriesResponseService monthlyCategoriesResponseService
     ) {
-        super(BotCommand.MONTHLY_STATISTICS.getCommand());
+        super(ResourceService.getValues("button.this-month"));
         this.telegramApi = telegramApi;
         this.monthlyCategoriesResponseService = monthlyCategoriesResponseService;
     }

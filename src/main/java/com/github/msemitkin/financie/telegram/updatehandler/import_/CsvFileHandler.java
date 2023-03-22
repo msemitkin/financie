@@ -2,7 +2,9 @@ package com.github.msemitkin.financie.telegram.updatehandler.import_;
 
 import com.github.msemitkin.financie.csvimport.CsvFileHistoryImportService;
 import com.github.msemitkin.financie.domain.UserService;
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.updatehandler.UpdateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +17,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.nio.file.Files;
+import java.util.Locale;
 import java.util.Optional;
 
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getFrom;
@@ -50,10 +53,10 @@ public class CsvFileHandler implements UpdateHandler {
     public void handleUpdate(Update update) {
         Long chatId = update.getMessage().getChatId();
         Integer messageId = update.getMessage().getMessageId();
-        sendMessage(chatId, messageId, """
-            Got it! We're processing your file now. This might take a few moments, \
-            so sit back and relax while we work our magic. We'll let you know once finished
-            """);
+
+        Locale userLocale = UserContextHolder.getContext().locale();
+
+        sendMessage(chatId, messageId, ResourceService.getValue("csv-on-upload-reply-message", userLocale));
         try {
             long senderTelegramId = getFrom(update).getId();
             long userId = userService.getUserByTelegramId(senderTelegramId).id();
@@ -63,12 +66,11 @@ public class CsvFileHandler implements UpdateHandler {
 
             csvFileHistoryImportService.importTransactions(userId, bytes);
 
-            sendMessage(chatId, messageId, "Your file has been processed!");
+            sendMessage(chatId, messageId, ResourceService.getValue("csv-file-processed-message", userLocale));
         } catch (Exception e) {
             logger.info("Failed to import transactions", e);
 
-            sendMessage(chatId, messageId,
-                "Failed to import transactions, please check file format and try again");
+            sendMessage(chatId, messageId, ResourceService.getValue("csv-failed-to-process-file-message", userLocale));
         }
     }
 

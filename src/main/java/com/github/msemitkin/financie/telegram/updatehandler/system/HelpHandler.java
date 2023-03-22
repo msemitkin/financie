@@ -1,6 +1,8 @@
 package com.github.msemitkin.financie.telegram.updatehandler.system;
 
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
 import com.github.msemitkin.financie.telegram.util.MarkdownUtil;
@@ -28,21 +30,7 @@ public class HelpHandler extends AbstractTextCommandHandler {
             .chatId(chatId)
             .parseMode(ParseMode.MARKDOWNV2)
             .text(MarkdownUtil.escapeMarkdownV2(
-                """
-                    Welcome to the financie — spending tracker bot!
-                    This bot allows you to keep track of your expenses by recording your spending in the following format:
-                                  
-                    <amount> <category>
-                                  
-                    For example, to record that you spent 500 on a car, you would send the following message:
-                                  
-                    `500 car`
-                                  
-                    The bot will automatically record the amount and category of the spending, along with the date and time.
-                                    
-                    That's it! With this bot, you can keep track of your spending and make better financial decisions.
-                    """
-            ))
+                ResourceService.getValue("help-message", UserContextHolder.getContext().locale())))
             .build();
         telegramApi.execute(sendMessage);
     }

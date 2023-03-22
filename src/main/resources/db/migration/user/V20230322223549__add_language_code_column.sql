@@ -1,0 +1,2 @@
+ALTER TABLE "user"
+    ADD COLUMN language_code VARCHAR NOT NULL DEFAULT 'en';

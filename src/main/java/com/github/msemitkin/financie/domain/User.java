@@ -6,6 +6,7 @@ public record User(
     Long telegramChatId,
     String telegramUsername,
     String firstName,
-    String lastName
+    String lastName,
+    String languageCode
 ) {
 }

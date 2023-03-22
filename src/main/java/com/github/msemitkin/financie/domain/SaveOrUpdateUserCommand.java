@@ -5,6 +5,7 @@ public record SaveOrUpdateUserCommand(
     long chatId,
     String firstName,
     String lastName,
-    String telegramUsername
+    String telegramUsername,
+    String languageCode
 ) {
 }

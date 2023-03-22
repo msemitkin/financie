@@ -1,5 +1,6 @@
 package com.github.msemitkin.financie.telegram.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.NonNull;
 
 import java.time.LocalDate;
@@ -12,14 +13,16 @@ public class FormatterUtil {
     private FormatterUtil() {
     }
 
+    //TODO with locale
     @NonNull
     public static String formatDate(@NonNull LocalDate date) {
         return date.format(DateTimeFormatter.ISO_DATE);
     }
 
     @NonNull
-    public static String formatMonth(@NonNull Month month) {
-        return month.getDisplayName(TextStyle.FULL, Locale.getDefault());
+    public static String formatMonth(@NonNull Month month, @NonNull Locale locale) {
+        String result = month.getDisplayName(TextStyle.FULL_STANDALONE, locale);
+        return StringUtils.capitalize(result);
     }
 
     @NonNull

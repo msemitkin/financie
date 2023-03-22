@@ -1,24 +1,29 @@
 package com.github.msemitkin.financie.telegram.updatehandler.system;
 
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
+import com.github.msemitkin.financie.telegram.keyboard.KeyboardService;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
-import java.util.List;
+import java.util.Locale;
 
 @Component
 public class StartMessageHandler extends AbstractTextCommandHandler {
     private final TelegramApi telegramApi;
+    private final KeyboardService keyboardService;
 
-    public StartMessageHandler(TelegramApi telegramApi) {
+    public StartMessageHandler(
+        TelegramApi telegramApi,
+        KeyboardService keyboardService
+    ) {
         super(BotCommand.START.getCommand());
         this.telegramApi = telegramApi;
+        this.keyboardService = keyboardService;
     }
 
     @Override
@@ -28,24 +33,12 @@ public class StartMessageHandler extends AbstractTextCommandHandler {
     }
 
     private void sendWelcomeMessage(Long chatId) {
-        ReplyKeyboardMarkup markup = ReplyKeyboardMarkup.builder()
-            .keyboardRow(new KeyboardRow(List.of(
-                KeyboardButton.builder().text(BotCommand.TODAY.getCommand()).build(),
-                KeyboardButton.builder().text(BotCommand.MONTHLY_STATISTICS.getCommand()).build()
-            )))
-            .resizeKeyboard(true)
-            .build();
+        Locale userLocale = UserContextHolder.getContext().locale();
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)
             //TODO customize message for new and existing users
-            .text("""
-                We're so happy to have you on board with Financie!
-                If you're new here, please use our /help command to get a brief overview \
-                of the available features and how to use them. \
-                If you have any questions or feedback, please don't hesitate to reach out. \
-                Our friendly team is always here to help! \uD83D\uDE0A
-                """)
-            .replyMarkup(markup)
+            .text(ResourceService.getValue("welcome-message", userLocale))
+            .replyMarkup(keyboardService.getDefaultReplyMarkup(userLocale))
             .build();
         telegramApi.execute(sendMessage);
     }

@@ -1,20 +1,24 @@
 package com.github.msemitkin.financie.telegram.command;
 
 public enum BotCommand {
-    START("/start"),
-    HELP("/help"),
-    IMPORT("/import"),
-    AUTHOR("/author"),
-    MONTHLY_STATISTICS("This month"),
-    TODAY("Today");
+    START("/start", "command.start.description"),
+    HELP("/help", "command.help.description"),
+    IMPORT("/import", "command.import.description"),
+    AUTHOR("/author", "command.author.description");
 
     private final String command;
+    private final String descriptionCode;
 
-    BotCommand(String command) {
+    BotCommand(String command, String descriptionCode) {
         this.command = command;
+        this.descriptionCode = descriptionCode;
     }
 
     public String getCommand() {
         return command;
+    }
+
+    public String getDescriptionCode() {
+        return descriptionCode;
     }
 }

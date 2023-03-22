@@ -1,6 +1,8 @@
 package com.github.msemitkin.financie.telegram.updatehandler;
 
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -28,13 +30,8 @@ public class DefaultUpdateHandler {
         Integer messageId = Optional.ofNullable(update.getMessage())
             .map(Message::getMessageId)
             .orElse(null);
-        String sorryMessage = """
-            Oops! It looks like we're a little confused and couldn't understand your command.
-            Don't worry, we'll get our act together soon! In the meantime, \
-            try typing /help for a list of commands that we do understand.
-                        
-            Thanks for being patient with us! 😅
-            """;
+
+        String sorryMessage = ResourceService.getValue("sorry-message", UserContextHolder.getContext().locale());
         long chatId = requireNonNull(getChatId(update));
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)

@@ -1,7 +1,9 @@
 package com.github.msemitkin.financie.telegram.updatehandler.transaction;
 
 import com.github.msemitkin.financie.domain.TransactionService;
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
 import com.github.msemitkin.financie.telegram.callback.CallbackType;
@@ -47,16 +49,16 @@ public class GetTransactionActionsMenuHandler extends AbstractQueryHandler {
         UUID callbackId = callbackService.saveCallback(callback);
 
         InlineKeyboardButton inlineKeyboardButton = InlineKeyboardButton.builder()
-            .text("Delete")
+            .text(ResourceService.getValue("button.delete", UserContextHolder.getContext().locale()))
             .callbackData(callbackId.toString())
             .build();
         InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
             .keyboardRow(List.of(inlineKeyboardButton))
             .build();
         String transaction = getTransactionRepresentation(transactionService.getTransaction(transactionId));
-        String text = """
-            %s
-            Actions""".formatted(transaction);
+
+        String text = transaction.concat("\n")
+            .concat(ResourceService.getValue("transaction-actions", UserContextHolder.getContext().locale()));
         EditMessageText editMessageText = EditMessageText.builder()
             .chatId(chatId)
             .messageId(messageId)

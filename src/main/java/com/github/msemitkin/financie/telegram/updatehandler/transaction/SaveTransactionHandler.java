@@ -5,14 +5,16 @@ import com.github.msemitkin.financie.domain.Statistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.domain.UserService;
+import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.MessageException;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.transaction.IncomingTransaction;
 import com.github.msemitkin.financie.telegram.transaction.TransactionCommandValidator;
 import com.github.msemitkin.financie.telegram.transaction.TransactionParser;
 import com.github.msemitkin.financie.telegram.transaction.TransactionRecognizer;
 import com.github.msemitkin.financie.telegram.updatehandler.UpdateHandler;
-import jakarta.annotation.Nullable;
+import org.apache.commons.text.StringSubstitutor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -22,10 +24,10 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
-import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 
@@ -83,7 +85,11 @@ public class SaveTransactionHandler implements UpdateHandler {
 
             sendSuccessfullySavedTransaction(chatId, userId, messageId, incomingTransaction.category());
         } catch (MessageException e) {
-            sendMessage(chatId, e.getMessage(), messageId);
+            telegramApi.execute(SendMessage.builder()
+                .chatId(chatId)
+                .text(e.getMessage())
+                .replyToMessageId(messageId)
+                .build());
         }
     }
 
@@ -96,31 +102,19 @@ public class SaveTransactionHandler implements UpdateHandler {
         Statistics dailyStatistics = statisticsService.getDailyStatistics(userId, category, LocalDate.now());
         Statistics monthlyStatistics = statisticsService
             .getStatistics(userId, category, YearMonth.now().atDay(1).atStartOfDay(), LocalDateTime.now());
-        String reply = escapeMarkdownV2("""
-            Saved
-            –––––
-            Today: `%s`
-            This month: `%s`
-            In this category: `%s`
-            """.formatted(
-            formatNumber(dailyStatistics.total()),
-            formatNumber(monthlyStatistics.total()),
-            formatNumber(monthlyStatistics.totalInCategory())
-        ));
-        sendMessage(chatId, reply, messageId);
-    }
-
-    private void sendMessage(
-        Long chatId,
-        String text,
-        @Nullable Integer replyToMessageId
-    ) {
-        SendMessage sendMessage = SendMessage.builder()
+        String reply = StringSubstitutor.replace(
+            ResourceService.getValue("transaction-saved-reply", UserContextHolder.getContext().locale()),
+            Map.of(
+                "today", formatNumber(dailyStatistics.total()),
+                "this_month", formatNumber(monthlyStatistics.total()),
+                "this_month_in_category", formatNumber(monthlyStatistics.totalInCategory())
+            )
+        );
+        telegramApi.execute(SendMessage.builder()
             .chatId(chatId)
-            .text(text)
+            .text(reply)
             .parseMode(ParseMode.MARKDOWNV2)
-            .replyToMessageId(replyToMessageId)
-            .build();
-        telegramApi.execute(sendMessage);
+            .replyToMessageId(messageId)
+            .build());
     }
 }
