@@ -56,9 +56,8 @@ class DailyCategoriesResponseService {
 
         if (statistics.isEmpty()) {
 
-            String message = dayOffset == 0
-                ? ResourceService.getValue("no-transactions-today", userLocale)
-                : StringSubstitutor.replace(ResourceService.getValue("no-transactions-on-date", userLocale),
+            String message = StringSubstitutor.replace(
+                ResourceService.getValue("no-transactions-on-date", userLocale),
                 Map.of("date", formatDate(LocalDate.now().plusDays(dayOffset)))
             );
             var keyboardMarkup = InlineKeyboardMarkup.builder()

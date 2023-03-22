@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatDate;
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getFrom;
@@ -76,10 +77,14 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
 
         Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
         if (transactions.isEmpty()) {
+            String message = StringSubstitutor.replace(
+                ResourceService.getValue("no-transactions-on-date", UserContextHolder.getContext().locale()),
+                Map.of("date", formatDate(LocalDate.now()))
+            );
             telegramApi.execute(EditMessageText.builder()
                 .chatId(chatId)
                 .messageId(messageId)
-                .text(ResourceService.getValue("no-transactions-today", UserContextHolder.getContext().locale()))
+                .text(message)
                 .parseMode(ParseMode.MARKDOWNV2)
                 .replyMarkup(InlineKeyboardMarkup.builder().keyboard(Collections.emptyList()).build())
                 .build());
