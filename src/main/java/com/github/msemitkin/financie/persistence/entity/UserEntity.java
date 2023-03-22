@@ -24,6 +24,8 @@ public class UserEntity {
     private String firstName;
     @Column(name = "last_name")
     private String lastName;
+    @Column(name = "language_code")
+    private String languageCode;
 
     public UserEntity() {
     }
@@ -34,7 +36,8 @@ public class UserEntity {
         Long telegramChatId,
         String telegramUsername,
         String firstName,
-        String lastName
+        String lastName,
+        String languageCode
     ) {
         this.id = id;
         this.telegramId = telegramId;
@@ -42,6 +45,7 @@ public class UserEntity {
         this.telegramUsername = telegramUsername;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.languageCode = languageCode;
     }
 
     public Long getId() {
@@ -90,5 +94,13 @@ public class UserEntity {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public String getLanguageCode() {
+        return languageCode;
+    }
+
+    public void setLanguageCode(String languageCode) {
+        this.languageCode = languageCode;
     }
 }

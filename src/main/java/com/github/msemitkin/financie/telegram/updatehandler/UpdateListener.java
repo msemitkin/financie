@@ -45,12 +45,8 @@ public class UpdateListener {
     public void onUpdateReceived(UpdateReceivedEvent event) {
         try {
             Update update = event.getUpdate();
-            updateUser(update);
-            Locale userLocale = Optional.ofNullable(getFrom(update))
-                .map(User::getLanguageCode)
-                .filter(SupportedLanguageChecker::isSupported)
-                .map(Locale::new)
-                .orElse(Locale.getDefault());
+            var user = updateUser(update);
+            Locale userLocale = getUserLocale(user);
             UserContextHolder.setContext(new UserContext(userLocale));
 
             processEvent(event);
@@ -59,6 +55,14 @@ public class UpdateListener {
         } finally {
             UserContextHolder.clearContext();
         }
+    }
+
+    private Locale getUserLocale(com.github.msemitkin.financie.domain.User user) {
+        return Optional.of(user)
+            .map(com.github.msemitkin.financie.domain.User::languageCode)
+            .filter(SupportedLanguageChecker::isSupported)
+            .map(Locale::new)
+            .orElse(Locale.getDefault());
     }
 
     private void processEvent(UpdateReceivedEvent event) {
@@ -70,11 +74,11 @@ public class UpdateListener {
                 () -> defaultUpdateHandler.handleUpdate(update));
     }
 
-    private void updateUser(@NonNull Update update) {
+    private com.github.msemitkin.financie.domain.User updateUser(@NonNull Update update) {
         User from = getFrom(update);
         Long chatId = getChatId(update);
         if (from != null && chatId != null) {
-            userService.saveOrUpdateUser(UserMapper.toSaveOrUpdateUserCommand(from, chatId));
+            return userService.saveOrUpdateUser(UserMapper.toSaveOrUpdateUserCommand(from, chatId));
         } else {
             logger.info("Failed to update user info: {}", update);
             throw new RuntimeException();

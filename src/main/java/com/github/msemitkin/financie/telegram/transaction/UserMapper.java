@@ -14,7 +14,8 @@ public class UserMapper {
             chatId,
             user.getFirstName(),
             user.getLastName(),
-            user.getUserName()
+            user.getUserName(),
+            user.getLanguageCode()
         );
     }
 }
