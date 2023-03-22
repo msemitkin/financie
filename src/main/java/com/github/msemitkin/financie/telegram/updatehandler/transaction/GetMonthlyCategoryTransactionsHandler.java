@@ -1,9 +1,11 @@
 package com.github.msemitkin.financie.telegram.updatehandler.transaction;
 
+import com.github.msemitkin.financie.domain.AveragePerDayService;
 import com.github.msemitkin.financie.domain.Category;
 import com.github.msemitkin.financie.domain.CategoryService;
 import com.github.msemitkin.financie.domain.Transaction;
 import com.github.msemitkin.financie.domain.TransactionService;
+import com.github.msemitkin.financie.domain.TransactionUtil;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
@@ -24,7 +26,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.YearMonth;
@@ -39,13 +40,14 @@ import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNu
 import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.TransactionUtil.getTransactionRepresentation;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
-import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getFrom;
+import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 
 @Component
 public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler {
     private final UserService userService;
     private final TransactionService transactionService;
     private final CategoryService categoryService;
+    private final AveragePerDayService averagePerDayService;
     private final TelegramApi telegramApi;
     private final int maxNumberOfStatisticsRecords;
 
@@ -54,6 +56,7 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
         TransactionService transactionService,
         CategoryService categoryService,
         CallbackService callbackService,
+        AveragePerDayService averagePerDayService,
         TelegramApi telegramApi,
         @Value("${com.github.msemitkin.financie.statistics.max-number-of-displayed-records}")
         int maxNumberOfStatisticsRecords
@@ -62,6 +65,7 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
         this.userService = userService;
         this.transactionService = transactionService;
         this.categoryService = categoryService;
+        this.averagePerDayService = averagePerDayService;
         this.telegramApi = telegramApi;
         this.maxNumberOfStatisticsRecords = maxNumberOfStatisticsRecords;
     }
@@ -72,7 +76,7 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
         long categoryId = callbackData.categoryId();
         int offset = callbackData.offset();
         Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
-        long userTelegramId = getFrom(update).getId();
+        long userTelegramId = getSenderTelegramId(update);
         long chatId = getChatId(update);
         long userId = userService.getUserByTelegramId(userTelegramId).id();
         LocalDateTime startOfMonth = YearMonth.now().plusMonths(offset).atDay(1).atStartOfDay();
@@ -84,21 +88,30 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
             .getTransactions(userId, category.name(), startOfMonth, startOfNextMonth)
             .stream().sorted(Comparator.comparing(Transaction::time).reversed()).toList();
 
-        Double totalInCategory = transactionsInCategory.stream()
-            .reduce(0.0, (res, tran) -> res + tran.amount(), Double::sum);
+        double totalInCategory = TransactionUtil.sum(transactionsInCategory);
+        double averagePerDayInCategory = averagePerDayService
+            .getAveragePerDay(totalInCategory, YearMonth.now().plusMonths(offset));
 
         Locale locale = UserContextHolder.getContext().locale();
-        String message = getMessage(category.name(), totalInCategory, locale);
+        String message = getMessage(category.name(), totalInCategory, averagePerDayInCategory, startOfMonth.getMonth(), locale);
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(transactionsInCategory);
         editMessage(chatId, messageId, message, keyboard);
     }
 
-    private static String getMessage(String category, Double totalInCategory, Locale locale) {
-        Month month = LocalDate.now().getMonth();
-        String message = StringSubstitutor.replace(
-            ResourceService.getValue("transactions-for-month-in-category", UserContextHolder.getContext().locale()),
-            Map.of("month", formatMonth(month, locale), "category", category, "total", formatNumber(totalInCategory))
+    private static String getMessage(
+        String category,
+        double totalInCategory,
+        double averagePerDayInCategory,
+        Month month,
+        Locale locale
+    ) {
+        var messageTemplate = ResourceService.getValue("transactions-for-month-in-category", locale);
+        var params = Map.of(
+            "month", formatMonth(month, locale),
+            "category", category, "total", formatNumber(totalInCategory),
+            "average_per_day", formatNumber(averagePerDayInCategory)
         );
+        String message = StringSubstitutor.replace(messageTemplate, params);
         return escapeMarkdownV2(message);
     }
 

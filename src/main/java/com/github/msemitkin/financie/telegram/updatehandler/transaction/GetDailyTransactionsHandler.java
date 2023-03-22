@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -75,34 +76,42 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
             .sorted(Comparator.comparing(Transaction::time).reversed())
             .toList();
 
-        Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+        Locale locale = UserContextHolder.getContext().locale();
+
         if (transactions.isEmpty()) {
-            String message = StringSubstitutor.replace(
-                ResourceService.getValue("no-transactions-on-date", UserContextHolder.getContext().locale()),
-                Map.of("date", formatDate(LocalDate.now()))
-            );
-            telegramApi.execute(EditMessageText.builder()
-                .chatId(chatId)
-                .messageId(messageId)
-                .text(message)
-                .parseMode(ParseMode.MARKDOWNV2)
-                .replyMarkup(InlineKeyboardMarkup.builder().keyboard(Collections.emptyList()).build())
-                .build());
+            sendNoTransactions(chatId, messageId, locale);
         } else {
-            double total = TransactionUtil.sum(transactions);
-            List<List<InlineKeyboardButton>> rows = getKeyboard(transactions);
-            String text = StringSubstitutor.replace(
-                ResourceService.getValue("transactions-for-day-in-category", UserContextHolder.getContext().locale()),
-                Map.of("category", category.name(), "total", formatNumber(total))
-            );
-            telegramApi.execute(EditMessageText.builder()
-                .chatId(chatId)
-                .messageId(messageId)
-                .text(text)
-                .parseMode(ParseMode.MARKDOWNV2)
-                .replyMarkup(InlineKeyboardMarkup.builder().keyboard(rows).build())
-                .build());
+            sendTransactions(chatId, startOfDay.toLocalDate(), category, transactions, messageId, locale);
         }
+    }
+
+    private void sendNoTransactions(long chatId, Integer messageId, Locale locale) {
+        String message = StringSubstitutor.replace(
+            ResourceService.getValue("no-transactions-on-date", locale),
+            Map.of("date", formatDate(LocalDate.now()))
+        );
+        reply(chatId, messageId, Collections.emptyList(), message);
+    }
+
+    private void sendTransactions(
+        long chatId,
+        LocalDate date,
+        Category category,
+        List<Transaction> transactions,
+        Integer messageId,
+        Locale locale
+    ) {
+        double total = TransactionUtil.sum(transactions);
+        List<List<InlineKeyboardButton>> rows = getKeyboard(transactions);
+        String messageTemplate = ResourceService.getValue("transactions-for-day-in-category", locale);
+        Map<String, String> params = Map.of(
+            "category", category.name(),
+            "total", formatNumber(total),
+            "date", formatDate(date)
+        );
+        String message = StringSubstitutor.replace(messageTemplate, params);
+        reply(chatId, messageId, rows, message);
     }
 
     private List<List<InlineKeyboardButton>> getKeyboard(List<Transaction> transactions) {
@@ -125,4 +134,18 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
             .toList();
     }
 
+    private void reply(
+        long chatId,
+        int messageId,
+        List<List<InlineKeyboardButton>> rows,
+        String message
+    ) {
+        telegramApi.execute(EditMessageText.builder()
+            .chatId(chatId)
+            .messageId(messageId)
+            .text(message)
+            .parseMode(ParseMode.MARKDOWNV2)
+            .replyMarkup(InlineKeyboardMarkup.builder().keyboard(rows).build())
+            .build());
+    }
 }
