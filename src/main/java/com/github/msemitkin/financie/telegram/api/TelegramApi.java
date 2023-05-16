@@ -18,11 +18,11 @@ public class TelegramApi {
         this.absSender = absSender;
     }
 
-    public <T extends Serializable, Method extends BotApiMethod<T>> T execute(Method method) {
+    public <T extends Serializable, M extends BotApiMethod<T>> T execute(M method) {
         try {
             return absSender.execute(method);
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            throw new TelegramApiMethodException(e);
         }
     }
 
@@ -30,7 +30,7 @@ public class TelegramApi {
         try {
             return absSender.execute(sendDocument);
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            throw new TelegramApiMethodException(e);
         }
     }
 
@@ -38,7 +38,7 @@ public class TelegramApi {
         try {
             return absSender.downloadFile(file);
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            throw new TelegramApiMethodException(e);
         }
     }
 }
