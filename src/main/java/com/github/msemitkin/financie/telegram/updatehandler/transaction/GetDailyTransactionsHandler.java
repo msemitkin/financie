@@ -15,6 +15,7 @@ import com.github.msemitkin.financie.telegram.callback.CallbackType;
 import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoryTransactionsCommand;
 import com.github.msemitkin.financie.telegram.callback.command.GetTransactionActionsCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
+import com.github.msemitkin.financie.telegram.util.MarkdownUtil;
 import org.apache.commons.text.StringSubstitutor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -110,7 +111,7 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
             "total", formatNumber(total),
             "date", formatDate(date)
         );
-        String message = StringSubstitutor.replace(messageTemplate, params);
+        String message = MarkdownUtil.escapeMarkdownV2(StringSubstitutor.replace(messageTemplate, params));
         reply(chatId, messageId, rows, message);
     }
 
