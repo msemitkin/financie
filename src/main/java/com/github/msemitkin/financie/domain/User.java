@@ -7,6 +7,7 @@ public record User(
     String telegramUsername,
     String firstName,
     String lastName,
-    String languageCode
+    String languageCode,
+    String timeZoneId
 ) {
 }

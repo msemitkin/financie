@@ -17,7 +17,8 @@ public class UserMapper {
             userEntity.getTelegramUsername(),
             userEntity.getFirstName(),
             userEntity.getLastName(),
-            userEntity.getLanguageCode()
+            userEntity.getLanguageCode(),
+            userEntity.getTimeZoneId()
         );
     }
 }

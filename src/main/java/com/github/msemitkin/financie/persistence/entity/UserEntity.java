@@ -26,6 +26,8 @@ public class UserEntity {
     private String lastName;
     @Column(name = "language_code")
     private String languageCode;
+    @Column(name = "timezone_id")
+    private String timeZoneId;
 
     public UserEntity() {
     }
@@ -37,7 +39,8 @@ public class UserEntity {
         String telegramUsername,
         String firstName,
         String lastName,
-        String languageCode
+        String languageCode,
+        String timeZoneId
     ) {
         this.id = id;
         this.telegramId = telegramId;
@@ -46,6 +49,7 @@ public class UserEntity {
         this.firstName = firstName;
         this.lastName = lastName;
         this.languageCode = languageCode;
+        this.timeZoneId = timeZoneId;
     }
 
     public Long getId() {
@@ -102,5 +106,13 @@ public class UserEntity {
 
     public void setLanguageCode(String languageCode) {
         this.languageCode = languageCode;
+    }
+
+    public String getTimeZoneId() {
+        return timeZoneId;
+    }
+
+    public void setTimeZoneId(String timeZoneId) {
+        this.timeZoneId = timeZoneId;
     }
 }

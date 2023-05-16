@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TimeZone;
 
 import static com.github.msemitkin.financie.persistence.mapper.UserMapper.mapToUser;
 
@@ -34,6 +35,21 @@ public class UserService {
         return mapToUser(userEntity);
     }
 
+    public void updateTimeZone(long userId, TimeZone timeZone) {
+        User userById = getUserById(userId);
+        UserEntity userEntity = new UserEntity(
+            userById.id(),
+            userById.telegramId(),
+            userById.telegramChatId(),
+            userById.telegramUsername(),
+            userById.firstName(),
+            userById.lastName(),
+            userById.languageCode(),
+            timeZone.getID()
+        );
+        userRepository.save(userEntity);
+    }
+
     public User saveOrUpdateUser(@NonNull SaveOrUpdateUserCommand command) {
         UserEntity userById = userRepository.getUserEntityByTelegramId(command.telegramId());
         User existingUser = Optional.ofNullable(userById)
@@ -55,7 +71,8 @@ public class UserService {
             command.telegramUsername(),
             command.firstName(),
             command.lastName(),
-            command.languageCode()
+            command.languageCode(),
+            null
         );
         return mapToUser(userRepository.save(userEntity));
     }
@@ -68,7 +85,8 @@ public class UserService {
             command.telegramUsername(),
             command.firstName(),
             command.lastName(),
-            command.languageCode()
+            command.languageCode(),
+            existing.timeZoneId()
         );
         User updated = mapToUser(userRepository.save(userEntity));
 

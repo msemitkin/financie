@@ -28,6 +28,7 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     implementation("org.apache.commons:commons-text:1.10.0")
+    implementation("com.google.maps:google-maps-services:2.2.0")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 

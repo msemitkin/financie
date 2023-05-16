@@ -22,6 +22,12 @@ public class KeyboardService {
                     .text(ResourceService.getValue("button.this-month", locale))
                     .build()
             )))
+            .keyboardRow(new KeyboardRow(List.of(
+                KeyboardButton.builder()
+                    .text(ResourceService.getValue("button.change-timezone", locale))
+                    .requestLocation(true)
+                    .build()
+            )))
             .resizeKeyboard(true)
             .build();
     }
