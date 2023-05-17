@@ -3,6 +3,8 @@ package com.github.msemitkin.financie.telegram.updatehandler;
 import com.github.msemitkin.financie.domain.User;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.locale.SupportedLanguageChecker;
+import com.github.msemitkin.financie.state.ImportState;
+import com.github.msemitkin.financie.state.MenuState;
 import com.github.msemitkin.financie.state.SettingsState;
 import com.github.msemitkin.financie.state.StateService;
 import com.github.msemitkin.financie.state.StateType;
@@ -41,6 +43,8 @@ public class UpdateListener {
     private final StartMessageHandler startMessageHandler;
     private final HelpHandler helpHandler;
     private final AuthorHandler authorHandler;
+    private final MenuState menuState;
+    private final ImportState importState;
 
     public UpdateListener(
         List<UpdateHandler> updateHandlers,
@@ -50,7 +54,9 @@ public class UpdateListener {
         SettingsState settingsState,
         StartMessageHandler startMessageHandler,
         HelpHandler helpHandler,
-        AuthorHandler authorHandler
+        AuthorHandler authorHandler,
+        MenuState menuState,
+        ImportState importState
     ) {
         this.updateHandlers = updateHandlers;
         this.defaultUpdateHandler = defaultUpdateHandler;
@@ -60,6 +66,8 @@ public class UpdateListener {
         this.startMessageHandler = startMessageHandler;
         this.helpHandler = helpHandler;
         this.authorHandler = authorHandler;
+        this.menuState = menuState;
+        this.importState = importState;
     }
 
     @Async
@@ -107,6 +115,8 @@ public class UpdateListener {
                     .ifPresentOrElse(updateHandler -> updateHandler.handleUpdate(update),
                         () -> defaultUpdateHandler.handleUpdate(update));
                 case SETTINGS -> settingsState.handle(update);
+                case MENU -> menuState.handle(update);
+                case IMPORT -> importState.handle(update);
             }
         }
     }

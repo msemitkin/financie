@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 
+import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getLocation;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getMessage;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.hasLocation;
@@ -54,14 +55,16 @@ public class SettingsState implements State {
         Locale locale = UserContextHolder.getContext().locale();
 
         String incomingMessage = getMessage(update);
+        Long chatId = getChatId(update);
         if (incomingMessage != null && backCommands.contains(incomingMessage)) {
-            var keyboard = keyboardService.getKeyboardForState(StateType.IDLE, locale);
+            StateType nextState = StateType.MENU;
+            var keyboard = keyboardService.getKeyboardForState(nextState, locale);
             telegramApi.execute(SendMessage.builder()
-                .chatId(update.getMessage().getChatId())
+                .chatId(chatId)
                 .text(incomingMessage)
                 .replyMarkup(keyboard)
                 .build());
-            stateService.setStateType(user.id(), StateType.IDLE);
+            stateService.setStateType(user.id(), nextState);
         } else if (hasLocation(update)) {
             TimeZone timeZone = getNewTimeZone(update);
             if (timeZone != null) {
@@ -69,17 +72,23 @@ public class SettingsState implements State {
                 String message = StringSubstitutor.replace(
                     ResourceService.getValue("timezone-updated-message", locale),
                     Map.of("timezone", timeZone.getID()));
-                var keyboard = keyboardService.getKeyboardForState(StateType.IDLE, locale);
+                StateType nextState = StateType.IDLE;
+                var keyboard = keyboardService.getKeyboardForState(nextState, locale);
                 telegramApi.execute(SendMessage.builder()
-                    .chatId(update.getMessage().getChatId())
+                    .chatId(chatId)
                     .text(message)
                     .replyMarkup(keyboard)
                     .build());
-                stateService.setStateType(user.id(), StateType.IDLE);
+                stateService.setStateType(user.id(), nextState);
+            } else {
+                telegramApi.execute(SendMessage.builder()
+                    .chatId(chatId)
+                    .text(ResourceService.getValue("timezone-not-changed-message", locale))
+                    .build());
             }
         } else {
             telegramApi.execute(SendMessage.builder()
-                .chatId(update.getMessage().getChatId())
+                .chatId(chatId)
                 .text(ResourceService.getValue("sorry-message", locale))
                 .build());
         }

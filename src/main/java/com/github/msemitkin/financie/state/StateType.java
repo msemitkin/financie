@@ -4,7 +4,8 @@ public enum StateType {
     NONE(0),
     IDLE(1),
     SETTINGS(2),
-    MENU(3);
+    MENU(3),
+    IMPORT(4);
 
     private final int id;
 
