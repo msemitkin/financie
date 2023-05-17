@@ -6,7 +6,6 @@ import com.github.msemitkin.financie.persistence.repository.CategoryRepository;
 import com.github.msemitkin.financie.persistence.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,27 +54,6 @@ public class StatisticsService {
             .findAllByUserIdAndCategoryIdAndDateTimeBetween(userId, categoryId, from, to);
         return new Statistics(sum(allTransactions), sum(transactionsInCategory));
 
-    }
-
-    public Statistics getDailyStatistics(long userId, String category, LocalDate date) {
-        Long categoryId = categoryRepository.getCategoryEntityByName(category);
-        LocalDateTime from = date.atStartOfDay();
-        LocalDateTime to = date.plusDays(1).atStartOfDay();
-        double totalInCategory = getTotalSpent(userId, categoryId, from, to);
-        double total = getTotalSpent(userId, from, to);
-        return new Statistics(total, totalInCategory);
-    }
-
-    private double getTotalSpent(long userId, long categoryId, LocalDateTime from, LocalDateTime to) {
-        List<TransactionEntity> transactions = transactionRepository
-            .findAllByUserIdAndCategoryIdAndDateTimeBetween(userId, categoryId, from, to);
-        return sum(transactions);
-    }
-
-    private double getTotalSpent(long userId, LocalDateTime from, LocalDateTime to) {
-        List<TransactionEntity> transactions = transactionRepository
-            .findAllByUserIdAndDateTimeBetween(userId, from, to);
-        return sum(transactions);
     }
 
     private Double sum(Collection<TransactionEntity> transactions) {

@@ -5,6 +5,7 @@ import com.github.msemitkin.financie.domain.CategoryStatistics;
 import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
+import com.github.msemitkin.financie.telegram.auth.UserContext;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,7 @@ import static com.github.msemitkin.financie.domain.StatisticsUtil.sum;
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
+import static com.github.msemitkin.financie.timezone.TimeZoneUtils.getUTCStartOfTheMonthInTimeZone;
 
 @Service
 public class MonthlyCategoriesResponseService {
@@ -61,9 +64,11 @@ public class MonthlyCategoriesResponseService {
         long userTelegramId = getSenderTelegramId(update);
         long userId = userService.getUserByTelegramId(userTelegramId).id();
 
-        Locale locale = UserContextHolder.getContext().locale();
+        UserContext context = UserContextHolder.getContext();
+        Locale locale = context.locale();
+        TimeZone timeZone = context.timeZone();
 
-        LocalDateTime startOfMonth = YearMonth.now().plusMonths(monthOffset).atDay(1).atStartOfDay();
+        LocalDateTime startOfMonth = getUTCStartOfTheMonthInTimeZone(timeZone.toZoneId()).plusMonths(monthOffset);
         LocalDateTime startOfNextMonth = startOfMonth.plusMonths(1);
         List<CategoryStatistics> statistics = statisticsService.getStatistics(userId, startOfMonth, startOfNextMonth);
         String month = formatMonth(startOfMonth.getMonth(), locale);
@@ -79,7 +84,11 @@ public class MonthlyCategoriesResponseService {
         }
 
         double total = sum(statistics);
-        double averagePerDay = averagePerDayService.getAveragePerDay(total, YearMonth.now().plusMonths(monthOffset));
+        double averagePerDay = averagePerDayService.getAveragePerDay(
+            total,
+            YearMonth.now(timeZone.toZoneId()).plusMonths(monthOffset),
+            timeZone.toZoneId()
+        );
 
         InlineKeyboardMarkup keyboard = getKeyboard(statistics, monthOffset, locale);
         String text = getText(total, averagePerDay, month, locale);

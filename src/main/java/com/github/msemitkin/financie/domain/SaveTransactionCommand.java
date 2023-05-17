@@ -10,6 +10,6 @@ public record SaveTransactionCommand(
     double amount,
     @Nonnull String category,
     @Nullable String description,
-    @Nullable LocalDateTime dateTime
+    @Nullable LocalDateTime utcDateTime
 ) {
 }

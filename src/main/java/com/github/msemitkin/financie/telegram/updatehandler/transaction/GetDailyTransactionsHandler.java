@@ -8,6 +8,7 @@ import com.github.msemitkin.financie.domain.TransactionUtil;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContext;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
@@ -16,6 +17,7 @@ import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoryT
 import com.github.msemitkin.financie.telegram.callback.command.GetTransactionActionsCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
 import com.github.msemitkin.financie.telegram.util.MarkdownUtil;
+import com.github.msemitkin.financie.timezone.TimeZoneUtils;
 import org.apache.commons.text.StringSubstitutor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -26,6 +28,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -62,13 +65,17 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
 
     @Override
     public void handleUpdate(Update update) {
+        UserContext userContext = UserContextHolder.getContext();
+        Locale locale = userContext.locale();
+        ZoneId timeZoneId = userContext.timeZone().toZoneId();
+
         long chatId = getChatId(update);
         long userTelegramId = getFrom(update).getId();
         long userId = userService.getUserByTelegramId(userTelegramId).id();
         var callbackData = getCallbackData(update, GetDailyCategoryTransactionsCommand.class);
         long categoryId = callbackData.categoryId();
         int offset = callbackData.offset();
-        LocalDateTime startOfDay = LocalDate.now().plusDays(offset).atStartOfDay();
+        LocalDateTime startOfDay = TimeZoneUtils.getUTCStartOfTheDayInTimeZone(timeZoneId).plusDays(offset);
         LocalDateTime startOfNextDay = startOfDay.plusDays(1);
         Category category = categoryService.getCategory(categoryId);
         List<Transaction> transactions = transactionService
@@ -78,19 +85,18 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
             .toList();
 
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
-        Locale locale = UserContextHolder.getContext().locale();
 
         if (transactions.isEmpty()) {
-            sendNoTransactions(chatId, messageId, locale);
+            sendNoTransactions(chatId, startOfDay.toLocalDate(), messageId, locale);
         } else {
             sendTransactions(chatId, startOfDay.toLocalDate(), category, transactions, messageId, locale);
         }
     }
 
-    private void sendNoTransactions(long chatId, Integer messageId, Locale locale) {
+    private void sendNoTransactions(long chatId, LocalDate date, Integer messageId, Locale locale) {
         String message = StringSubstitutor.replace(
             ResourceService.getValue("no-transactions-on-date", locale),
-            Map.of("date", formatDate(LocalDate.now()))
+            Map.of("date", formatDate(date))
         );
         reply(chatId, messageId, Collections.emptyList(), message);
     }

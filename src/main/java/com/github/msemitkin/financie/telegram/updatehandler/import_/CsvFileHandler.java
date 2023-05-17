@@ -4,6 +4,7 @@ import com.github.msemitkin.financie.csvimport.CsvFileHistoryImportService;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContext;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.updatehandler.UpdateHandler;
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.nio.file.Files;
+import java.time.ZoneId;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -54,7 +56,9 @@ public class CsvFileHandler implements UpdateHandler {
         Long chatId = update.getMessage().getChatId();
         Integer messageId = update.getMessage().getMessageId();
 
-        Locale userLocale = UserContextHolder.getContext().locale();
+        UserContext userContext = UserContextHolder.getContext();
+        Locale userLocale = userContext.locale();
+        ZoneId timeZoneId = userContext.timeZone().toZoneId();
 
         sendMessage(chatId, messageId, ResourceService.getValue("csv-on-upload-reply-message", userLocale));
         try {
@@ -64,7 +68,7 @@ public class CsvFileHandler implements UpdateHandler {
             java.io.File file = telegramApi.downloadFile(fileReference);
             byte[] bytes = Files.readAllBytes(file.toPath());
 
-            csvFileHistoryImportService.importTransactions(userId, bytes);
+            csvFileHistoryImportService.importTransactions(userId, bytes, timeZoneId);
 
             sendMessage(chatId, messageId, ResourceService.getValue("csv-file-processed-message", userLocale));
         } catch (Exception e) {

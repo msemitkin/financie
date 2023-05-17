@@ -5,6 +5,7 @@ import com.github.msemitkin.financie.domain.StatisticsService;
 import com.github.msemitkin.financie.domain.StatisticsUtil;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
+import com.github.msemitkin.financie.telegram.auth.UserContext;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
@@ -19,6 +20,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -31,6 +34,7 @@ import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatDa
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
+import static com.github.msemitkin.financie.timezone.TimeZoneUtils.getUTCStartOfTheDayInTimeZone;
 
 @Component
 class DailyCategoriesResponseService {
@@ -49,16 +53,19 @@ class DailyCategoriesResponseService {
     }
 
     Response prepareResponse(Update update, GetDailyCategoriesCommand command) {
+        UserContext userContext = UserContextHolder.getContext();
+        Locale userLocale = userContext.locale();
+        ZoneId timeZoneId = userContext.timeZone().toZoneId();
+
         int dayOffset = command.offset();
         long userId = userService.getUserByTelegramId(getSenderTelegramId(update)).id();
-        List<CategoryStatistics> statistics = getDailyCategories(userId, dayOffset);
-        Locale userLocale = UserContextHolder.getContext().locale();
+        List<CategoryStatistics> statistics = getDailyCategories(userId, dayOffset, timeZoneId);
 
         if (statistics.isEmpty()) {
 
             String message = StringSubstitutor.replace(
                 ResourceService.getValue("no-transactions-on-date", userLocale),
-                Map.of("date", formatDate(LocalDate.now().plusDays(dayOffset)))
+                Map.of("date", formatDate(LocalDate.now(timeZoneId).plusDays(dayOffset)))
             );
             var keyboardMarkup = InlineKeyboardMarkup.builder()
                 .keyboardRow(getPageButtons(dayOffset, userLocale))
@@ -68,7 +75,7 @@ class DailyCategoriesResponseService {
             double total = StatisticsUtil.sum(statistics);
             String message = StringSubstitutor.replace(
                 ResourceService.getValue("total-on-date", userLocale),
-                Map.of("date", formatDate(LocalDate.now().plusDays(dayOffset)), "amount", formatNumber(total))
+                Map.of("date", formatDate(LocalDate.now(timeZoneId).plusDays(dayOffset)), "amount", formatNumber(total))
             );
             message = escapeMarkdownV2(message);
             var keyboardMarkup = InlineKeyboardMarkup.builder()
@@ -78,12 +85,10 @@ class DailyCategoriesResponseService {
         }
     }
 
-    private List<CategoryStatistics> getDailyCategories(long userId, int dayOffset) {
-        return statisticsService.getStatistics(
-            userId,
-            LocalDate.now().plusDays(dayOffset).atStartOfDay(),
-            LocalDate.now().plusDays(dayOffset).plusDays(1).atStartOfDay()
-        );
+    private List<CategoryStatistics> getDailyCategories(long userId, int dayOffset, ZoneId zoneId) {
+        LocalDateTime startOfTheDay = getUTCStartOfTheDayInTimeZone(zoneId).plusDays(dayOffset);
+
+        return statisticsService.getStatistics(userId, startOfTheDay, startOfTheDay.plusDays(1));
     }
 
     private List<InlineKeyboardButton> getPageButtons(int dayOffset, Locale locale) {

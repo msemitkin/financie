@@ -5,6 +5,7 @@ import com.github.msemitkin.financie.domain.TransactionService;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -20,11 +21,11 @@ public class CsvFileHistoryImportService {
         this.transactionService = transactionService;
     }
 
-    public void importTransactions(long userId, byte[] payload) {
+    public void importTransactions(long userId, byte[] payload, ZoneId zoneId) {
         try {
             List<TransactionEntity> transactions = getTransactions(payload);
             List<SaveTransactionCommand> commands = transactions.stream()
-                .map(tran -> toCommand(userId, tran))
+                .map(tran -> toCommand(userId, tran, zoneId))
                 .toList();
             transactionService.saveTransactions(commands);
         } catch (RuntimeException e) {
@@ -40,13 +41,13 @@ public class CsvFileHistoryImportService {
         }
     }
 
-    private SaveTransactionCommand toCommand(long userId, TransactionEntity tran) {
+    private SaveTransactionCommand toCommand(long userId, TransactionEntity tran, ZoneId zoneId) {
         return new SaveTransactionCommand(
             userId,
             tran.getAmount(),
             tran.getCategory(),
             tran.getDescription(),
-            tran.getTransactionTime()
+            tran.getTransactionTime().atZone(zoneId).withZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime()
         );
     }
 }

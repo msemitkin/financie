@@ -9,6 +9,7 @@ import com.github.msemitkin.financie.domain.TransactionUtil;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.auth.UserContext;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
@@ -33,6 +34,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMonth;
@@ -41,6 +43,7 @@ import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMar
 import static com.github.msemitkin.financie.telegram.util.TransactionUtil.getTransactionRepresentation;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
+import static com.github.msemitkin.financie.timezone.TimeZoneUtils.getUTCStartOfTheMonthInTimeZone;
 
 @Component
 public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler {
@@ -72,6 +75,10 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
 
     @Override
     public void handleUpdate(Update update) {
+        UserContext userContext = UserContextHolder.getContext();
+        Locale locale = userContext.locale();
+        TimeZone timeZone = userContext.timeZone();
+
         var callbackData = getCallbackData(update, GetMonthlyCategoryTransactionsCommand.class);
         long categoryId = callbackData.categoryId();
         int offset = callbackData.offset();
@@ -79,7 +86,7 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
         long userTelegramId = getSenderTelegramId(update);
         long chatId = getChatId(update);
         long userId = userService.getUserByTelegramId(userTelegramId).id();
-        LocalDateTime startOfMonth = YearMonth.now().plusMonths(offset).atDay(1).atStartOfDay();
+        LocalDateTime startOfMonth = getUTCStartOfTheMonthInTimeZone(timeZone.toZoneId()).plusMonths(offset);
         LocalDateTime startOfNextMonth = startOfMonth.plusMonths(1);
 
         Category category = categoryService.getCategory(categoryId);
@@ -90,9 +97,8 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
 
         double totalInCategory = TransactionUtil.sum(transactionsInCategory);
         double averagePerDayInCategory = averagePerDayService
-            .getAveragePerDay(totalInCategory, YearMonth.now().plusMonths(offset));
+            .getAveragePerDay(totalInCategory, YearMonth.now().plusMonths(offset), timeZone.toZoneId());
 
-        Locale locale = UserContextHolder.getContext().locale();
         String message = getMessage(category.name(), totalInCategory, averagePerDayInCategory, startOfMonth.getMonth(), locale);
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(transactionsInCategory);
         editMessage(chatId, messageId, message, keyboard);

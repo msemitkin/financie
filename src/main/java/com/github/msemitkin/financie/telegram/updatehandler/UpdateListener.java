@@ -47,9 +47,11 @@ public class UpdateListener {
             Update update = event.getUpdate();
             var user = updateUser(update);
             Locale userLocale = getUserLocale(user);
-            UserContextHolder.setContext(new UserContext(userLocale));
-
-            processEvent(event);
+            TimeZone timeZone = Optional.ofNullable(user.timeZoneId())
+                .map(TimeZone::getTimeZone)
+                .orElse(TimeZone.getDefault());
+            UserContextHolder.setContext(new UserContext(userLocale, timeZone));
+            processEvent(event, user);
         } catch (Exception e) {
             logger.error("Unhandled exception", e);
         } finally {

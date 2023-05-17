@@ -34,7 +34,7 @@ public class TransactionService {
         transactionValidator.validateTransaction(command);
 
         Long categoryId = getOrCreateCategoryId(command.category());
-        LocalDateTime transactionTime = requireNonNullElse(command.dateTime(), LocalDateTime.now());
+        LocalDateTime transactionTime = requireNonNullElse(command.utcDateTime(), LocalDateTime.now());
         TransactionEntity transaction = new TransactionEntity(
             null, command.userId(), command.amount(), categoryId, command.description(), transactionTime);
         transactionRepository.save(transaction);
