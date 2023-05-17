@@ -1,30 +1,23 @@
-package com.github.msemitkin.financie.telegram.updatehandler;
+package com.github.msemitkin.financie.telegram.updatehandler.matcher;
 
-import org.springframework.lang.NonNull;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.Optional;
 import java.util.Set;
 
-public abstract class AbstractTextCommandHandler implements UpdateHandler {
-    @NonNull
+public class TextCommandUpdateMatcher implements UpdateMatcher {
     private final Set<String> commands;
 
-    protected AbstractTextCommandHandler(@NonNull Set<String> commands) {
+    public TextCommandUpdateMatcher(Set<String> commands) {
         this.commands = commands;
     }
 
-    protected AbstractTextCommandHandler(@NonNull String command) {
-        this(Set.of(command));
-    }
-
     @Override
-    public final boolean canHandle(Update update) {
+    public boolean match(Update update) {
         return Optional.ofNullable(update.getMessage())
             .map(Message::getText)
             .map(commands::contains)
             .orElse(false);
     }
-
 }

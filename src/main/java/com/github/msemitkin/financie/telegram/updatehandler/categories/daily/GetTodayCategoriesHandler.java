@@ -3,7 +3,8 @@ package com.github.msemitkin.financie.telegram.updatehandler.categories.daily;
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoriesCommand;
-import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.BaseUpdateHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.matcher.UpdateMatcher;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -12,7 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 
 @Component
-public class GetTodayCategoriesHandler extends AbstractTextCommandHandler {
+public class GetTodayCategoriesHandler extends BaseUpdateHandler {
     private final TelegramApi telegramApi;
     private final DailyCategoriesResponseService dailyCategoriesResponseService;
 
@@ -20,7 +21,7 @@ public class GetTodayCategoriesHandler extends AbstractTextCommandHandler {
         TelegramApi telegramApi,
         DailyCategoriesResponseService dailyCategoriesResponseService
     ) {
-        super(ResourceService.getValues("button.today"));
+        super(UpdateMatcher.textCommandMatcher(ResourceService.getValues("button.today")));
         this.telegramApi = telegramApi;
         this.dailyCategoriesResponseService = dailyCategoriesResponseService;
     }

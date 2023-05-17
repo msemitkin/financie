@@ -12,11 +12,13 @@ import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.auth.UserContext;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.Callback;
+import com.github.msemitkin.financie.telegram.callback.CallbackDataExtractor;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
 import com.github.msemitkin.financie.telegram.callback.CallbackType;
 import com.github.msemitkin.financie.telegram.callback.command.GetMonthlyCategoryTransactionsCommand;
 import com.github.msemitkin.financie.telegram.callback.command.GetTransactionActionsCommand;
-import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.BaseUpdateHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.matcher.UpdateMatcher;
 import jakarta.annotation.Nullable;
 import org.apache.commons.text.StringSubstitutor;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,12 +48,14 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTe
 import static com.github.msemitkin.financie.timezone.TimeZoneUtils.getUTCStartOfTheMonthInTimeZone;
 
 @Component
-public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler {
+public class GetMonthlyCategoryTransactionsHandler extends BaseUpdateHandler {
     private final UserService userService;
     private final TransactionService transactionService;
     private final CategoryService categoryService;
     private final AveragePerDayService averagePerDayService;
     private final TelegramApi telegramApi;
+    private final CallbackDataExtractor callbackDataExtractor;
+    private final CallbackService callbackService;
     private final int maxNumberOfStatisticsRecords;
 
     public GetMonthlyCategoryTransactionsHandler(
@@ -61,15 +65,18 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
         CallbackService callbackService,
         AveragePerDayService averagePerDayService,
         TelegramApi telegramApi,
+        CallbackDataExtractor callbackDataExtractor,
         @Value("${com.github.msemitkin.financie.statistics.max-number-of-displayed-records}")
         int maxNumberOfStatisticsRecords
     ) {
-        super(CallbackType.GET_CATEGORY_TRANSACTIONS_FOR_MONTH, callbackService);
+        super(UpdateMatcher.callbackQueryMatcher(callbackService, CallbackType.GET_CATEGORY_TRANSACTIONS_FOR_MONTH));
         this.userService = userService;
         this.transactionService = transactionService;
         this.categoryService = categoryService;
         this.averagePerDayService = averagePerDayService;
         this.telegramApi = telegramApi;
+        this.callbackDataExtractor = callbackDataExtractor;
+        this.callbackService = callbackService;
         this.maxNumberOfStatisticsRecords = maxNumberOfStatisticsRecords;
     }
 
@@ -79,7 +86,7 @@ public class GetMonthlyCategoryTransactionsHandler extends AbstractQueryHandler 
         Locale locale = userContext.locale();
         TimeZone timeZone = userContext.timeZone();
 
-        var callbackData = getCallbackData(update, GetMonthlyCategoryTransactionsCommand.class);
+        var callbackData = callbackDataExtractor.getCallbackData(update, GetMonthlyCategoryTransactionsCommand.class);
         long categoryId = callbackData.categoryId();
         int offset = callbackData.offset();
         Integer messageId = update.getCallbackQuery().getMessage().getMessageId();

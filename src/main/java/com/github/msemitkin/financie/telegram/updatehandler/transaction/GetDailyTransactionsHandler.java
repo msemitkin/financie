@@ -11,11 +11,13 @@ import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.auth.UserContext;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.Callback;
+import com.github.msemitkin.financie.telegram.callback.CallbackDataExtractor;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
 import com.github.msemitkin.financie.telegram.callback.CallbackType;
 import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoryTransactionsCommand;
 import com.github.msemitkin.financie.telegram.callback.command.GetTransactionActionsCommand;
-import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.BaseUpdateHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.matcher.UpdateMatcher;
 import com.github.msemitkin.financie.telegram.util.MarkdownUtil;
 import com.github.msemitkin.financie.timezone.TimeZoneUtils;
 import org.apache.commons.text.StringSubstitutor;
@@ -43,24 +45,29 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getFrom;
 
 @Component
-public class GetDailyTransactionsHandler extends AbstractQueryHandler {
+public class GetDailyTransactionsHandler extends BaseUpdateHandler {
     private final TransactionService transactionService;
     private final UserService userService;
     private final CategoryService categoryService;
     private final TelegramApi telegramApi;
+    private final CallbackDataExtractor callbackDataExtractor;
+    private final CallbackService callbackService;
 
     public GetDailyTransactionsHandler(
         TransactionService transactionService,
         UserService userService,
         CategoryService categoryService,
         CallbackService callbackService,
-        TelegramApi telegramApi
+        TelegramApi telegramApi,
+        CallbackDataExtractor callbackDataExtractor
     ) {
-        super(CallbackType.GET_CATEGORY_TRANSACTIONS_FOR_DAY, callbackService);
+        super(UpdateMatcher.callbackQueryMatcher(callbackService, CallbackType.GET_CATEGORY_TRANSACTIONS_FOR_DAY));
         this.transactionService = transactionService;
         this.userService = userService;
         this.categoryService = categoryService;
         this.telegramApi = telegramApi;
+        this.callbackDataExtractor = callbackDataExtractor;
+        this.callbackService = callbackService;
     }
 
     @Override
@@ -72,7 +79,7 @@ public class GetDailyTransactionsHandler extends AbstractQueryHandler {
         long chatId = getChatId(update);
         long userTelegramId = getFrom(update).getId();
         long userId = userService.getUserByTelegramId(userTelegramId).id();
-        var callbackData = getCallbackData(update, GetDailyCategoryTransactionsCommand.class);
+        var callbackData = callbackDataExtractor.getCallbackData(update, GetDailyCategoryTransactionsCommand.class);
         long categoryId = callbackData.categoryId();
         int offset = callbackData.offset();
         LocalDateTime startOfDay = TimeZoneUtils.getUTCStartOfTheDayInTimeZone(timeZoneId).plusDays(offset);

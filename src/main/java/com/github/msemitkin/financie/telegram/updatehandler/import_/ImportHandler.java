@@ -3,7 +3,8 @@ package com.github.msemitkin.financie.telegram.updatehandler.import_;
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
-import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.BaseUpdateHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.matcher.UpdateMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +23,8 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static java.util.Objects.requireNonNull;
 
 @Component
-public class ImportHandler extends AbstractTextCommandHandler {
+//TODO move import to menu
+public class ImportHandler extends BaseUpdateHandler {
     private static final Logger logger = LoggerFactory.getLogger(ImportHandler.class);
 
     private final TelegramApi telegramApi;
@@ -36,7 +38,7 @@ public class ImportHandler extends AbstractTextCommandHandler {
         @Value("${com.github.msemitkin.financie.import.output-file-name}") String outputFileName,
         ResourceLoader resourceLoader
     ) {
-        super(IMPORT.getCommand());
+        super(UpdateMatcher.textCommandMatcher(IMPORT.getCommand()));
         this.telegramApi = telegramApi;
         this.resourceLoader = resourceLoader;
         this.templatePath = templatePath;

@@ -4,7 +4,7 @@ import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
-import com.github.msemitkin.financie.telegram.updatehandler.AbstractTextCommandHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.matcher.UpdateMatcher;
 import com.github.msemitkin.financie.telegram.util.MarkdownUtil;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -15,15 +15,19 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static java.util.Objects.requireNonNull;
 
 @Component
-public class AuthorHandler extends AbstractTextCommandHandler {
+public class AuthorHandler {
+    private final UpdateMatcher updateMatcher;
     private final TelegramApi telegramApi;
 
     public AuthorHandler(TelegramApi telegramApi) {
-        super(BotCommand.AUTHOR.getCommand());
+        this.updateMatcher = UpdateMatcher.textCommandMatcher(BotCommand.AUTHOR.getCommand());
         this.telegramApi = telegramApi;
     }
 
-    @Override
+    public boolean canHandle(Update update) {
+        return updateMatcher.match(update);
+    }
+
     public void handleUpdate(Update update) {
         Long chatId = requireNonNull(getChatId(update));
         String text = MarkdownUtil.escapeMarkdownV2(

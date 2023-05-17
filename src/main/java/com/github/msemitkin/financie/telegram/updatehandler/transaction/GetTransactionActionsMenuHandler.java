@@ -5,11 +5,13 @@ import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.Callback;
+import com.github.msemitkin.financie.telegram.callback.CallbackDataExtractor;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
 import com.github.msemitkin.financie.telegram.callback.CallbackType;
 import com.github.msemitkin.financie.telegram.callback.command.DeleteTransactionCommand;
 import com.github.msemitkin.financie.telegram.callback.command.GetTransactionActionsCommand;
-import com.github.msemitkin.financie.telegram.updatehandler.AbstractQueryHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.BaseUpdateHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.matcher.UpdateMatcher;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -24,25 +26,30 @@ import static com.github.msemitkin.financie.telegram.util.TransactionUtil.getTra
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 
 @Component
-public class GetTransactionActionsMenuHandler extends AbstractQueryHandler {
+public class GetTransactionActionsMenuHandler extends BaseUpdateHandler {
     private final TelegramApi telegramApi;
     private final TransactionService transactionService;
+    private final CallbackDataExtractor callbackDataExtractor;
+    private final CallbackService callbackService;
 
     public GetTransactionActionsMenuHandler(
         TelegramApi telegramApi,
         TransactionService transactionService,
-        CallbackService callbackService
+        CallbackService callbackService,
+        CallbackDataExtractor callbackDataExtractor
     ) {
-        super(CallbackType.GET_TRANSACTION_ACTIONS, callbackService);
+        super(UpdateMatcher.callbackQueryMatcher(callbackService, CallbackType.GET_TRANSACTION_ACTIONS));
         this.telegramApi = telegramApi;
         this.transactionService = transactionService;
+        this.callbackDataExtractor = callbackDataExtractor;
+        this.callbackService = callbackService;
     }
 
     @Override
     public void handleUpdate(Update update) {
         Long chatId = getChatId(update);
         Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
-        var callbackData = getCallbackData(update, GetTransactionActionsCommand.class);
+        var callbackData = callbackDataExtractor.getCallbackData(update, GetTransactionActionsCommand.class);
         long transactionId = callbackData.transactionId();
 
         var callback = new Callback<>(DELETE_TRANSACTION, new DeleteTransactionCommand(transactionId));
