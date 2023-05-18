@@ -38,7 +38,7 @@ public class DeleteTransactionHandler extends BaseUpdateHandler {
     }
 
     @Override
-    public void handleUpdate(Update update) {
+    protected void handleUpdate(Update update) {
         var callbackData = callbackDataExtractor.getCallbackData(update, DeleteTransactionCommand.class);
         Long chatId = getChatId(update);
         Integer messageId = update.getCallbackQuery().getMessage().getMessageId();

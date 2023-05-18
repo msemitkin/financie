@@ -14,7 +14,7 @@ import com.github.msemitkin.financie.telegram.transaction.IncomingTransaction;
 import com.github.msemitkin.financie.telegram.transaction.TransactionCommandValidator;
 import com.github.msemitkin.financie.telegram.transaction.TransactionParser;
 import com.github.msemitkin.financie.telegram.transaction.TransactionRecognizer;
-import com.github.msemitkin.financie.telegram.updatehandler.UpdateHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.chain.UpdateHandler;
 import org.apache.commons.text.StringSubstitutor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -35,7 +35,7 @@ import static com.github.msemitkin.financie.timezone.TimeZoneUtils.getUTCStartOf
 import static com.github.msemitkin.financie.timezone.TimeZoneUtils.getUTCStartOfTheMonthInTimeZone;
 
 @Component
-public class SaveTransactionHandler implements UpdateHandler {
+public class SaveTransactionHandler extends UpdateHandler {
     private final TelegramApi telegramApi;
     private final TransactionRecognizer transactionRecognizer;
     private final TransactionCommandValidator transactionCommandValidator;
@@ -63,7 +63,7 @@ public class SaveTransactionHandler implements UpdateHandler {
     }
 
     @Override
-    public boolean canHandle(Update update) {
+    protected boolean canHandle(Update update) {
         return Optional.ofNullable(update.getMessage())
             .map(Message::getText)
             .map(transactionRecognizer::hasTransactionFormat)
@@ -71,7 +71,7 @@ public class SaveTransactionHandler implements UpdateHandler {
     }
 
     @Override
-    public void handleUpdate(Update update) {
+    protected void handleUpdate(Update update) {
         UserContext userContext = UserContextHolder.getContext();
         Locale locale = userContext.locale();
         ZoneId timeZoneId = userContext.timeZone().toZoneId();

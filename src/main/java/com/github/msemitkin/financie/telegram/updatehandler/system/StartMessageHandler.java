@@ -9,6 +9,7 @@ import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.command.BotCommand;
 import com.github.msemitkin.financie.telegram.keyboard.KeyboardService;
+import com.github.msemitkin.financie.telegram.updatehandler.BaseUpdateHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.matcher.UpdateMatcher;
 import com.github.msemitkin.financie.telegram.util.UpdateUtil;
 import org.springframework.stereotype.Component;
@@ -18,10 +19,9 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import java.util.Locale;
 
 @Component
-public class StartMessageHandler {
+public class StartMessageHandler extends BaseUpdateHandler {
     private static final StateType INITIAL_STATE_TYPE = StateType.IDLE;
 
-    private final UpdateMatcher updateMatcher;
     private final TelegramApi telegramApi;
     private final KeyboardService keyboardService;
     private final StateService stateService;
@@ -33,18 +33,16 @@ public class StartMessageHandler {
         StateService stateService,
         UserService userService
     ) {
+        super(UpdateMatcher.textCommandMatcher(BotCommand.START.getCommand()));
         this.stateService = stateService;
         this.userService = userService;
-        this.updateMatcher = UpdateMatcher.textCommandMatcher(BotCommand.START.getCommand());
         this.telegramApi = telegramApi;
         this.keyboardService = keyboardService;
     }
 
-    public boolean canHandle(Update update) {
-        return updateMatcher.match(update);
-    }
 
-    public void handleUpdate(Update update) {
+    @Override
+    protected void handleUpdate(Update update) {
         long chatId = update.getMessage().getChatId();
         sendWelcomeMessage(chatId);
         long senderTelegramId = UpdateUtil.getSenderTelegramId(update);

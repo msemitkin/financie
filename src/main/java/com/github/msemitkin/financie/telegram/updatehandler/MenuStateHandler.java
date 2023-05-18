@@ -1,8 +1,10 @@
-package com.github.msemitkin.financie.state;
+package com.github.msemitkin.financie.telegram.updatehandler;
 
 import com.github.msemitkin.financie.domain.User;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
+import com.github.msemitkin.financie.state.StateService;
+import com.github.msemitkin.financie.state.StateType;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.auth.UserContext;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
@@ -30,8 +32,8 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getMessage;
 import static java.util.Objects.requireNonNull;
 
 @Component
-public class MenuState implements State {
-    private static final Logger logger = LoggerFactory.getLogger(MenuState.class);
+public class MenuStateHandler extends BaseUpdateHandler {
+    private static final Logger logger = LoggerFactory.getLogger(MenuStateHandler.class);
 
     private final UpdateMatcher importMatcher =
         textCommandMatcher(ResourceService.getValues("button.import"));
@@ -48,7 +50,7 @@ public class MenuState implements State {
     private final String templatePath;
     private final String outputFileName;
 
-    public MenuState(
+    public MenuStateHandler(
         TelegramApi telegramApi,
         StateService stateService,
         KeyboardService keyboardService,
@@ -57,6 +59,7 @@ public class MenuState implements State {
         @Value("${com.github.msemitkin.financie.import.template-path}") String templatePath,
         @Value("${com.github.msemitkin.financie.import.output-file-name}") String outputFileName
     ) {
+        super(UpdateMatcher.userStateTypeUpdateMatcher(userService, stateService, StateType.MENU));
         this.telegramApi = telegramApi;
         this.stateService = stateService;
         this.keyboardService = keyboardService;
@@ -68,7 +71,7 @@ public class MenuState implements State {
 
 
     @Override
-    public void handle(Update update) {
+    protected void handleUpdate(Update update) {
         UserContext userContext = UserContextHolder.getContext();
         Locale locale = userContext.locale();
         Long chatId = UpdateUtil.getChatId(update);
