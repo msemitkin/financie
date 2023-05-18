@@ -99,13 +99,6 @@ class DailyCategoriesResponseService {
         return dayOffset == 0 ? List.of(leftButton) : List.of(leftButton, rightButton);
     }
 
-    private InlineKeyboardButton button(String text, String callbackData) {
-        return InlineKeyboardButton.builder()
-            .text(text)
-            .callbackData(callbackData)
-            .build();
-    }
-
     private String getPageButtonCallbackData(int dayOffset) {
         var command = new GetDailyCategoriesCommand(dayOffset);
         return callbackService.saveCallback(new Callback<>(CallbackType.GET_CATEGORIES_FOR_DAY, command)).toString();
@@ -117,24 +110,28 @@ class DailyCategoriesResponseService {
         Locale locale
     ) {
         List<List<InlineKeyboardButton>> keyboard = statistics.stream()
-            .map(tran -> {
-                var callback = new Callback<>(
-                    GET_CATEGORY_TRANSACTIONS_FOR_DAY,
-                    new GetDailyCategoryTransactionsCommand(tran.categoryId(), dayOffset)
-                );
-                UUID callbackId = callbackService.saveCallback(callback);
-                var text = StringSubstitutor.replace(
-                    ResourceService.getValue("category-transaction-format", locale),
-                    Map.of("category", tran.categoryName(), "amount", formatNumber(tran.amount()))
-                );
-                return InlineKeyboardButton.builder()
-                    .text(text)
-                    .callbackData(callbackId.toString())
-                    .build();
-            })
+            .map(tran -> getInlineButton(tran, dayOffset, locale))
             .map(List::of)
             .collect(Collectors.toCollection(ArrayList::new));
         keyboard.add(getPageButtons(dayOffset, locale));
         return keyboard;
+    }
+
+    private InlineKeyboardButton getInlineButton(CategoryStatistics category, int dayOffset, Locale locale) {
+        var callback = new Callback<>(GET_CATEGORY_TRANSACTIONS_FOR_DAY,
+            new GetDailyCategoryTransactionsCommand(category.categoryId(), dayOffset));
+        UUID callbackId = callbackService.saveCallback(callback);
+        var text = StringSubstitutor.replace(
+            ResourceService.getValue("category-transaction-format", locale),
+            Map.of("category", category.categoryName(), "amount", formatNumber(category.amount()))
+        );
+        return button(text, callbackId.toString());
+    }
+
+    private InlineKeyboardButton button(String text, String callbackData) {
+        return InlineKeyboardButton.builder()
+            .text(text)
+            .callbackData(callbackData)
+            .build();
     }
 }
