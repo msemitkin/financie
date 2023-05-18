@@ -18,14 +18,13 @@ public class KeyboardService {
     public ReplyKeyboardMarkup getKeyboardForState(StateType stateType, Locale locale) {
         return switch (stateType) {
             case NONE, IDLE -> keyboard(
-                row(
-                    textButton(ResourceService.getValue("button.today", locale)),
-                    textButton(ResourceService.getValue("button.this-month", locale))
-                ),
+                row(textButton(ResourceService.getValue("button.today", locale)),
+                    textButton(ResourceService.getValue("button.this-month", locale))),
                 row(textButton(ResourceService.getValue("button.menu", locale)))
             );
             case MENU -> keyboard(
-                row(textButton(ResourceService.getValue("button.import", locale))),
+                row(textButton(ResourceService.getValue("button.import", locale)),
+                    textButton(ResourceService.getValue("button.export", locale))),
                 row(textButton(ResourceService.getValue("button.settings", locale))),
                 row(textButton(ResourceService.getValue("button.back", locale)))
             );

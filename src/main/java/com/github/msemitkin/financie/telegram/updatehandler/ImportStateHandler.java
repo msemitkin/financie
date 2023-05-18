@@ -1,6 +1,6 @@
 package com.github.msemitkin.financie.telegram.updatehandler;
 
-import com.github.msemitkin.financie.csvimport.CsvFileHistoryImportService;
+import com.github.msemitkin.financie.csv.CsvFileHistoryImportService;
 import com.github.msemitkin.financie.domain.User;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;

@@ -1,4 +1,4 @@
-package com.github.msemitkin.financie.csvimport;
+package com.github.msemitkin.financie.csv;
 
 public class ImportTransactionsException extends RuntimeException {
 

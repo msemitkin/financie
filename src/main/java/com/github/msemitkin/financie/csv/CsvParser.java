@@ -1,4 +1,4 @@
-package com.github.msemitkin.financie.csvimport;
+package com.github.msemitkin.financie.csv;
 
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;

@@ -1,5 +1,6 @@
 package com.github.msemitkin.financie.telegram.updatehandler;
 
+import com.github.msemitkin.financie.csv.CsvFileHistoryExportService;
 import com.github.msemitkin.financie.domain.User;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
@@ -22,6 +23,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
@@ -37,6 +39,8 @@ public class MenuStateHandler extends BaseUpdateHandler {
 
     private final UpdateMatcher importMatcher =
         textCommandMatcher(ResourceService.getValues("button.import"));
+    private final UpdateMatcher exportMatcher =
+        textCommandMatcher(ResourceService.getValues("button.export"));
     private final UpdateMatcher settingsMatcher =
         textCommandMatcher(ResourceService.getValues("button.settings"));
     private final UpdateMatcher backMatcher =
@@ -46,6 +50,7 @@ public class MenuStateHandler extends BaseUpdateHandler {
     private final StateService stateService;
     private final KeyboardService keyboardService;
     private final UserService userService;
+    private final CsvFileHistoryExportService csvFileHistoryExportService;
     private final ResourceLoader resourceLoader;
     private final String templatePath;
     private final String outputFileName;
@@ -55,6 +60,7 @@ public class MenuStateHandler extends BaseUpdateHandler {
         StateService stateService,
         KeyboardService keyboardService,
         UserService userService,
+        CsvFileHistoryExportService csvFileHistoryExportService,
         ResourceLoader resourceLoader,
         @Value("${com.github.msemitkin.financie.import.template-path}") String templatePath,
         @Value("${com.github.msemitkin.financie.import.output-file-name}") String outputFileName
@@ -64,6 +70,7 @@ public class MenuStateHandler extends BaseUpdateHandler {
         this.stateService = stateService;
         this.keyboardService = keyboardService;
         this.userService = userService;
+        this.csvFileHistoryExportService = csvFileHistoryExportService;
         this.resourceLoader = resourceLoader;
         this.templatePath = templatePath;
         this.outputFileName = outputFileName;
@@ -108,6 +115,21 @@ public class MenuStateHandler extends BaseUpdateHandler {
             }
 
             stateService.setStateType(user.id(), nextState);
+        } else if (exportMatcher.match(update)) {
+
+            byte[] content = csvFileHistoryExportService.getFileToExport(user.id(), userContext.timeZone().toZoneId());
+            try (ByteArrayInputStream is = new ByteArrayInputStream(content)) {
+                telegramApi.execute(SendDocument.builder()
+                    .chatId(chatId)
+                    .document(new InputFile(is, "Financie export.csv"))
+                    .build());
+            } catch (Exception e) {
+                logger.error("Failed to export transactions", e);
+                telegramApi.execute(SendMessage.builder()
+                    .chatId(chatId)
+                    .text("Failed to export transactions, please try again")
+                    .build());
+            }
         } else if (backMatcher.match(update)) {
             StateType nextState = StateType.IDLE;
             telegramApi.execute(SendMessage.builder()
