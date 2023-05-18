@@ -3,18 +3,11 @@ package com.github.msemitkin.financie.telegram.updatehandler;
 import com.github.msemitkin.financie.domain.User;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.locale.SupportedLanguageChecker;
-import com.github.msemitkin.financie.state.ImportState;
-import com.github.msemitkin.financie.state.MenuState;
-import com.github.msemitkin.financie.state.SettingsState;
-import com.github.msemitkin.financie.state.StateService;
-import com.github.msemitkin.financie.state.StateType;
 import com.github.msemitkin.financie.telegram.UpdateReceivedEvent;
 import com.github.msemitkin.financie.telegram.auth.UserContext;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.transaction.UserMapper;
-import com.github.msemitkin.financie.telegram.updatehandler.system.AuthorHandler;
-import com.github.msemitkin.financie.telegram.updatehandler.system.HelpHandler;
-import com.github.msemitkin.financie.telegram.updatehandler.system.StartMessageHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.chain.UpdateHandlerChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -23,7 +16,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.TimeZone;
@@ -35,39 +27,12 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getFrom;
 public class UpdateListener {
     private static final Logger logger = LoggerFactory.getLogger(UpdateListener.class);
 
-    private final List<UpdateHandler> updateHandlers;
-    private final DefaultUpdateHandler defaultUpdateHandler;
+    private final UpdateHandlerChain updateHandlerChain;
     private final UserService userService;
-    private final StateService stateService;
-    private final SettingsState settingsState;
-    private final StartMessageHandler startMessageHandler;
-    private final HelpHandler helpHandler;
-    private final AuthorHandler authorHandler;
-    private final MenuState menuState;
-    private final ImportState importState;
 
-    public UpdateListener(
-        List<UpdateHandler> updateHandlers,
-        DefaultUpdateHandler defaultUpdateHandler,
-        UserService userService,
-        StateService stateService,
-        SettingsState settingsState,
-        StartMessageHandler startMessageHandler,
-        HelpHandler helpHandler,
-        AuthorHandler authorHandler,
-        MenuState menuState,
-        ImportState importState
-    ) {
-        this.updateHandlers = updateHandlers;
-        this.defaultUpdateHandler = defaultUpdateHandler;
+    public UpdateListener(UpdateHandlerChain updateHandlerChain, UserService userService) {
+        this.updateHandlerChain = updateHandlerChain;
         this.userService = userService;
-        this.stateService = stateService;
-        this.settingsState = settingsState;
-        this.startMessageHandler = startMessageHandler;
-        this.helpHandler = helpHandler;
-        this.authorHandler = authorHandler;
-        this.menuState = menuState;
-        this.importState = importState;
     }
 
     @Async
@@ -81,7 +46,7 @@ public class UpdateListener {
                 .map(TimeZone::getTimeZone)
                 .orElse(TimeZone.getDefault());
             UserContextHolder.setContext(new UserContext(userLocale, timeZone));
-            processEvent(event, user);
+            processEvent(event);
         } catch (Exception e) {
             logger.error("Unhandled exception", e);
         } finally {
@@ -97,28 +62,9 @@ public class UpdateListener {
             .orElse(Locale.getDefault());
     }
 
-    private void processEvent(UpdateReceivedEvent event, User user) {
-        StateType stateType = stateService.getStateType(user.id());
+    private void processEvent(UpdateReceivedEvent event) {
         Update update = event.getUpdate();
-
-        if (startMessageHandler.canHandle(update)) {
-            startMessageHandler.handleUpdate(update);
-        } else if (helpHandler.canHandle(update)) {
-            helpHandler.handleUpdate(update);
-        } else if (authorHandler.canHandle(update)) {
-            authorHandler.handleUpdate(update);
-        } else {
-            switch (stateType) {
-                case NONE, IDLE -> updateHandlers.stream()
-                    .filter(updateHandler -> updateHandler.canHandle(update))
-                    .findFirst()
-                    .ifPresentOrElse(updateHandler -> updateHandler.handleUpdate(update),
-                        () -> defaultUpdateHandler.handleUpdate(update));
-                case SETTINGS -> settingsState.handle(update);
-                case MENU -> menuState.handle(update);
-                case IMPORT -> importState.handle(update);
-            }
-        }
+        updateHandlerChain.handleUpdate(update);
     }
 
     private User updateUser(@NonNull Update update) {

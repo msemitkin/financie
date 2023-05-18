@@ -10,11 +10,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-public class CallbackQueryUpdateMatcher implements UpdateMatcher {
+class CallbackQueryUpdateMatcher implements UpdateMatcher {
     private final CallbackService callbackService;
     private final Set<CallbackType> queryTypes;
 
-    public CallbackQueryUpdateMatcher(
+    CallbackQueryUpdateMatcher(
         CallbackService callbackService,
         Set<CallbackType> queryTypes
     ) {

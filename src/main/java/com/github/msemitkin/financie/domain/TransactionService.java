@@ -6,6 +6,7 @@ import com.github.msemitkin.financie.persistence.mapper.TransactionMapper;
 import com.github.msemitkin.financie.persistence.repository.CategoryRepository;
 import com.github.msemitkin.financie.persistence.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -47,21 +48,13 @@ public class TransactionService {
 
     public Transaction getTransaction(long id) {
         return transactionRepository.findById(id)
-            .map(tran -> {
-                Long categoryId = tran.getCategoryId();
-                String categoryName = categoryRepository.findById(categoryId)
-                    .map(CategoryEntity::getName)
-                    .orElse(null);
-                return new Transaction(
-                    tran.getId(),
-                    tran.getUserId(),
-                    tran.getAmount(),
-                    categoryName,
-                    tran.getDescription(),
-                    tran.getDateTime()
-                );
-            })
+            .map(this::toTransaction)
             .orElseThrow();
+    }
+
+    public List<Transaction> getTransactions(long userId) {
+        return transactionRepository.findAllByUserIdOrderByDateTimeDesc(userId)
+            .stream().map(this::toTransaction).toList();
     }
 
     public List<Transaction> getTransactions(
@@ -85,5 +78,14 @@ public class TransactionService {
         Long categoryId = categoryRepository.getCategoryEntityByName(name);
         return Optional.ofNullable(categoryId)
             .orElseGet(() -> categoryRepository.save(new CategoryEntity(null, name)).getId());
+    }
+
+    @NonNull
+    private Transaction toTransaction(TransactionEntity tran) {
+        Long categoryId = tran.getCategoryId();
+        String categoryName = categoryRepository.findById(categoryId)
+            .map(CategoryEntity::getName)
+            .orElse(null);
+        return TransactionMapper.toTransaction(tran, categoryName);
     }
 }

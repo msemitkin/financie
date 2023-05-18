@@ -1,13 +1,16 @@
-package com.github.msemitkin.financie.state;
+package com.github.msemitkin.financie.telegram.updatehandler;
 
 import com.github.msemitkin.financie.domain.Location;
 import com.github.msemitkin.financie.domain.User;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.localizatitonapi.GetTimezoneByLocationPort;
 import com.github.msemitkin.financie.resources.ResourceService;
+import com.github.msemitkin.financie.state.StateService;
+import com.github.msemitkin.financie.state.StateType;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.keyboard.KeyboardService;
+import com.github.msemitkin.financie.telegram.updatehandler.matcher.UpdateMatcher;
 import com.github.msemitkin.financie.telegram.util.UpdateUtil;
 import org.apache.commons.text.StringSubstitutor;
 import org.springframework.stereotype.Component;
@@ -26,7 +29,7 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getMessage;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.hasLocation;
 
 @Component
-public class SettingsState implements State {
+public class SettingsStateHandler extends BaseUpdateHandler {
     private final UserService userService;
     private final StateService stateService;
     private final TelegramApi telegramApi;
@@ -34,13 +37,14 @@ public class SettingsState implements State {
     private final KeyboardService keyboardService;
     private final Set<String> backCommands = ResourceService.getValues("button.back");
 
-    public SettingsState(
+    public SettingsStateHandler(
         UserService userService,
         StateService stateService,
         TelegramApi telegramApi,
         GetTimezoneByLocationPort getTimezoneByLocationPort,
         KeyboardService keyboardService
     ) {
+        super(UpdateMatcher.userStateTypeUpdateMatcher(userService, stateService, StateType.SETTINGS));
         this.userService = userService;
         this.stateService = stateService;
         this.telegramApi = telegramApi;
@@ -49,7 +53,7 @@ public class SettingsState implements State {
     }
 
     @Override
-    public void handle(Update update) {
+    protected void handleUpdate(Update update) {
         long senderTelegramId = UpdateUtil.getSenderTelegramId(update);
         User user = userService.getUserByTelegramId(senderTelegramId);
         Locale locale = UserContextHolder.getContext().locale();

@@ -1,9 +1,11 @@
-package com.github.msemitkin.financie.state;
+package com.github.msemitkin.financie.telegram.updatehandler;
 
-import com.github.msemitkin.financie.csvimport.CsvFileHistoryImportService;
+import com.github.msemitkin.financie.csv.CsvFileHistoryImportService;
 import com.github.msemitkin.financie.domain.User;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
+import com.github.msemitkin.financie.state.StateService;
+import com.github.msemitkin.financie.state.StateType;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.auth.UserContext;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
@@ -30,8 +32,8 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getMessage;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 
 @Component
-public class ImportState implements State {
-    private static final Logger logger = LoggerFactory.getLogger(ImportState.class);
+public class ImportStateHandler extends BaseUpdateHandler {
+    private static final Logger logger = LoggerFactory.getLogger(ImportStateHandler.class);
 
     private final UpdateMatcher importMatcher = update -> Optional
         .ofNullable(update.getMessage())
@@ -47,13 +49,14 @@ public class ImportState implements State {
     private final StateService stateService;
     private final CsvFileHistoryImportService csvFileHistoryImportService;
 
-    public ImportState(
+    public ImportStateHandler(
         UserService userService,
         TelegramApi telegramApi,
         KeyboardService keyboardService,
         StateService stateService,
         CsvFileHistoryImportService csvFileHistoryImportService
     ) {
+        super(UpdateMatcher.userStateTypeUpdateMatcher(userService, stateService, StateType.IMPORT));
         this.userService = userService;
         this.telegramApi = telegramApi;
         this.keyboardService = keyboardService;
@@ -62,7 +65,7 @@ public class ImportState implements State {
     }
 
     @Override
-    public void handle(Update update) {
+    protected void handleUpdate(Update update) {
         UserContext userContext = UserContextHolder.getContext();
         Locale userLocale = userContext.locale();
         ZoneId timeZoneId = userContext.timeZone().toZoneId();

@@ -32,4 +32,6 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
         @Param("start") LocalDateTime start,
         @Param("end") LocalDateTime end
     );
+
+    List<TransactionEntity> findAllByUserIdOrderByDateTimeDesc(long userId);
 }

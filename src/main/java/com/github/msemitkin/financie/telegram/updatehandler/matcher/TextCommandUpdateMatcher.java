@@ -6,10 +6,10 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import java.util.Optional;
 import java.util.Set;
 
-public class TextCommandUpdateMatcher implements UpdateMatcher {
+class TextCommandUpdateMatcher implements UpdateMatcher {
     private final Set<String> commands;
 
-    public TextCommandUpdateMatcher(Set<String> commands) {
+    TextCommandUpdateMatcher(Set<String> commands) {
         this.commands = commands;
     }
 

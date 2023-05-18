@@ -1,10 +1,11 @@
-package com.github.msemitkin.financie.csvimport;
+package com.github.msemitkin.financie.csv;
 
 import com.github.msemitkin.financie.domain.SaveTransactionCommand;
 import com.github.msemitkin.financie.domain.TransactionService;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.ZoneId;
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class CsvFileHistoryImportService {
         try {
             return csvParser.parseTransactions(payload, TransactionEntity.class);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 

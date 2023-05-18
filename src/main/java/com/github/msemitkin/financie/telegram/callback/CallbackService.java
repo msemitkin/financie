@@ -13,9 +13,9 @@ public class CallbackService {
     private final CallbackRepository callbackRepository;
     private final Gson gson;
 
-    public CallbackService(CallbackRepository callbackRepository) {
+    public CallbackService(CallbackRepository callbackRepository, Gson gson) {
         this.callbackRepository = callbackRepository;
-        this.gson = new Gson();
+        this.gson = gson;
     }
 
     public <T> UUID saveCallback(Callback<T> callback) {

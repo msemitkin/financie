@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.NonNull;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
@@ -13,10 +14,14 @@ public class FormatterUtil {
     private FormatterUtil() {
     }
 
-    //TODO with locale
     @NonNull
     public static String formatDate(@NonNull LocalDate date) {
         return date.format(DateTimeFormatter.ISO_DATE);
+    }
+
+    @NonNull
+    public static String formatDateTime(@NonNull LocalDateTime dateTime) {
+        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
     }
 
     @NonNull

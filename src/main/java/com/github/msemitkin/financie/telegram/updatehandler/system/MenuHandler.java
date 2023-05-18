@@ -41,7 +41,7 @@ public class MenuHandler extends BaseUpdateHandler {
     }
 
     @Override
-    public void handleUpdate(Update update) {
+    protected void handleUpdate(Update update) {
         long senderTelegramId = UpdateUtil.getSenderTelegramId(update);
         User user = userService.getUserByTelegramId(senderTelegramId);
         Locale locale = UserContextHolder.getContext().locale();

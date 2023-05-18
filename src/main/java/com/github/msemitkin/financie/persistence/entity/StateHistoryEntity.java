@@ -18,15 +18,23 @@ public class StateHistoryEntity {
     private Long userId;
     private StateType stateType;
     private LocalDateTime time;
+    private String context;
 
     public StateHistoryEntity() {
     }
 
-    public StateHistoryEntity(Long id, Long userId, StateType stateType, LocalDateTime time) {
+    public StateHistoryEntity(
+        Long id,
+        Long userId,
+        StateType stateType,
+        LocalDateTime time,
+        String context
+    ) {
         this.id = id;
         this.userId = userId;
         this.stateType = stateType;
         this.time = time;
+        this.context = context;
     }
 
     public Long getId() {
@@ -59,5 +67,13 @@ public class StateHistoryEntity {
 
     public void setTime(LocalDateTime time) {
         this.time = time;
+    }
+
+    public String getContext() {
+        return context;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
     }
 }

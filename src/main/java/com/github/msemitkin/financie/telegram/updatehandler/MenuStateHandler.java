@@ -1,8 +1,11 @@
-package com.github.msemitkin.financie.state;
+package com.github.msemitkin.financie.telegram.updatehandler;
 
+import com.github.msemitkin.financie.csv.CsvFileHistoryExportService;
 import com.github.msemitkin.financie.domain.User;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
+import com.github.msemitkin.financie.state.StateService;
+import com.github.msemitkin.financie.state.StateType;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import com.github.msemitkin.financie.telegram.auth.UserContext;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
@@ -20,6 +23,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
@@ -30,11 +34,13 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getMessage;
 import static java.util.Objects.requireNonNull;
 
 @Component
-public class MenuState implements State {
-    private static final Logger logger = LoggerFactory.getLogger(MenuState.class);
+public class MenuStateHandler extends BaseUpdateHandler {
+    private static final Logger logger = LoggerFactory.getLogger(MenuStateHandler.class);
 
     private final UpdateMatcher importMatcher =
         textCommandMatcher(ResourceService.getValues("button.import"));
+    private final UpdateMatcher exportMatcher =
+        textCommandMatcher(ResourceService.getValues("button.export"));
     private final UpdateMatcher settingsMatcher =
         textCommandMatcher(ResourceService.getValues("button.settings"));
     private final UpdateMatcher backMatcher =
@@ -44,23 +50,27 @@ public class MenuState implements State {
     private final StateService stateService;
     private final KeyboardService keyboardService;
     private final UserService userService;
+    private final CsvFileHistoryExportService csvFileHistoryExportService;
     private final ResourceLoader resourceLoader;
     private final String templatePath;
     private final String outputFileName;
 
-    public MenuState(
+    public MenuStateHandler(
         TelegramApi telegramApi,
         StateService stateService,
         KeyboardService keyboardService,
         UserService userService,
+        CsvFileHistoryExportService csvFileHistoryExportService,
         ResourceLoader resourceLoader,
         @Value("${com.github.msemitkin.financie.import.template-path}") String templatePath,
         @Value("${com.github.msemitkin.financie.import.output-file-name}") String outputFileName
     ) {
+        super(UpdateMatcher.userStateTypeUpdateMatcher(userService, stateService, StateType.MENU));
         this.telegramApi = telegramApi;
         this.stateService = stateService;
         this.keyboardService = keyboardService;
         this.userService = userService;
+        this.csvFileHistoryExportService = csvFileHistoryExportService;
         this.resourceLoader = resourceLoader;
         this.templatePath = templatePath;
         this.outputFileName = outputFileName;
@@ -68,7 +78,7 @@ public class MenuState implements State {
 
 
     @Override
-    public void handle(Update update) {
+    protected void handleUpdate(Update update) {
         UserContext userContext = UserContextHolder.getContext();
         Locale locale = userContext.locale();
         Long chatId = UpdateUtil.getChatId(update);
@@ -105,6 +115,21 @@ public class MenuState implements State {
             }
 
             stateService.setStateType(user.id(), nextState);
+        } else if (exportMatcher.match(update)) {
+
+            byte[] content = csvFileHistoryExportService.getFileToExport(user.id(), userContext.timeZone().toZoneId());
+            try (ByteArrayInputStream is = new ByteArrayInputStream(content)) {
+                telegramApi.execute(SendDocument.builder()
+                    .chatId(chatId)
+                    .document(new InputFile(is, "Financie export.csv"))
+                    .build());
+            } catch (Exception e) {
+                logger.error("Failed to export transactions", e);
+                telegramApi.execute(SendMessage.builder()
+                    .chatId(chatId)
+                    .text("Failed to export transactions, please try again")
+                    .build());
+            }
         } else if (backMatcher.match(update)) {
             StateType nextState = StateType.IDLE;
             telegramApi.execute(SendMessage.builder()
