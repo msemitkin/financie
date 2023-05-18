@@ -10,16 +10,22 @@ public class TimeZoneUtils {
     }
 
     public static LocalDateTime getUTCStartOfTheDayInTimeZone(ZoneId zoneId) {
-        return LocalDate.now(zoneId)
-            .atStartOfDay()
+        return getUTCStartOfTheDayInTimeZone(LocalDate.now(), zoneId);
+    }
+
+    public static LocalDateTime getUTCStartOfTheDayInTimeZone(LocalDate date, ZoneId zoneId) {
+        return date.atStartOfDay()
             .atZone(zoneId)
             .withZoneSameInstant(ZoneId.of("UTC"))
             .toLocalDateTime();
     }
 
     public static LocalDateTime getUTCStartOfTheMonthInTimeZone(ZoneId zoneId) {
-        return YearMonth.now(zoneId)
-            .atDay(1)
+        return getUTCStartOfTheMonthInTimeZone(YearMonth.now(zoneId), zoneId);
+    }
+
+    public static LocalDateTime getUTCStartOfTheMonthInTimeZone(YearMonth yearMonth, ZoneId zoneId) {
+        return yearMonth.atDay(1)
             .atStartOfDay()
             .atZone(zoneId)
             .withZoneSameInstant(ZoneId.of("UTC"))

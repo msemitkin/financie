@@ -33,7 +33,7 @@ public class KeyboardService {
                 row(requestLocationButton(ResourceService.getValue("button.change-timezone", locale))),
                 row(textButton(ResourceService.getValue("button.back", locale)))
             );
-            case IMPORT -> keyboard(
+            case IMPORT, ADD_TRANSACTION -> keyboard(
                 row(textButton(ResourceService.getValue("button.cancel", locale)))
             );
         };

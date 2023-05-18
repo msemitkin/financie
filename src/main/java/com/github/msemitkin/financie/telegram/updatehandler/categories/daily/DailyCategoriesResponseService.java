@@ -10,6 +10,7 @@ import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.Callback;
 import com.github.msemitkin.financie.telegram.callback.CallbackService;
 import com.github.msemitkin.financie.telegram.callback.CallbackType;
+import com.github.msemitkin.financie.telegram.callback.command.AddTransactionCommand;
 import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoriesCommand;
 import com.github.msemitkin.financie.telegram.callback.command.GetDailyCategoryTransactionsCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.categories.Response;
@@ -29,6 +30,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.github.msemitkin.financie.telegram.callback.CallbackType.ADD_TRANSACTION;
 import static com.github.msemitkin.financie.telegram.callback.CallbackType.GET_CATEGORY_TRANSACTIONS_FOR_DAY;
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatDate;
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
@@ -69,6 +71,7 @@ class DailyCategoriesResponseService {
             );
             var keyboardMarkup = InlineKeyboardMarkup.builder()
                 .keyboardRow(getPageButtons(dayOffset, userLocale))
+                .keyboardRow(List.of(getAddTransactionButton(dayOffset, userLocale)))
                 .build();
             return new Response(escapeMarkdownV2(message), keyboardMarkup);
         } else {
@@ -114,6 +117,7 @@ class DailyCategoriesResponseService {
             .map(List::of)
             .collect(Collectors.toCollection(ArrayList::new));
         keyboard.add(getPageButtons(dayOffset, locale));
+        keyboard.add(List.of(getAddTransactionButton(dayOffset, locale)));
         return keyboard;
     }
 
@@ -126,6 +130,12 @@ class DailyCategoriesResponseService {
             Map.of("category", category.categoryName(), "amount", formatNumber(category.amount()))
         );
         return button(text, callbackId.toString());
+    }
+
+    private InlineKeyboardButton getAddTransactionButton(int dayOffset, Locale locale) {
+        var callback = new Callback<>(ADD_TRANSACTION, new AddTransactionCommand(LocalDate.now().plusDays(dayOffset)));
+        UUID callbackId = callbackService.saveCallback(callback);
+        return button(ResourceService.getValue("button.add-transaction", locale), callbackId.toString());
     }
 
     private InlineKeyboardButton button(String text, String callbackData) {

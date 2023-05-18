@@ -1,5 +1,6 @@
 package com.github.msemitkin.financie.telegram.updatehandler.chain;
 
+import com.github.msemitkin.financie.telegram.updatehandler.AddTransactionStateHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.DefaultUpdateHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.ImportStateHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.MenuStateHandler;
@@ -12,6 +13,7 @@ import com.github.msemitkin.financie.telegram.updatehandler.system.AuthorHandler
 import com.github.msemitkin.financie.telegram.updatehandler.system.HelpHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.system.MenuHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.system.StartMessageHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.transaction.AddTransactionCallbackHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.transaction.DeleteTransactionHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.transaction.GetDailyTransactionsHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.transaction.GetMonthlyCategoryTransactionsHandler;
@@ -36,27 +38,34 @@ public class UpdateHandlerChainConfig {
         GetTodayCategoriesHandler getTodayCategoriesHandler,
         GetTransactionActionsMenuHandler getTransactionActionsMenuHandler,
         DeleteTransactionHandler deleteTransactionHandler,
+        AddTransactionCallbackHandler addTransactionCallbackHandler,
         MenuHandler menuHandler,
         MenuStateHandler menuStateHandler,
         ImportStateHandler importStateHandler,
         SaveTransactionHandler saveTransactionHandler,
         SettingsStateHandler settingsStateHandler,
+        AddTransactionStateHandler addTransactionStateHandler,
         DefaultUpdateHandler defaultUpdateHandler
     ) {
         return UpdateHandlerChain.builder()
+            //commands
             .addHandler(startMessageHandler)
             .addHandler(helpHandler)
             .addHandler(authorHandler)
+            //callback queries
             .addHandler(getDailyCategoriesHandler)
             .addHandler(getDailyTransactionsHandler)
             .addHandler(getMonthlyCategoriesHandler)
             .addHandler(getMonthlyCategoryTransactionsHandler)
             .addHandler(getTransactionActionsMenuHandler)
             .addHandler(deleteTransactionHandler)
+            .addHandler(addTransactionCallbackHandler)
             .addHandler(menuHandler)
             .addHandler(menuStateHandler)
             .addHandler(importStateHandler)
             .addHandler(settingsStateHandler)
+            .addHandler(addTransactionStateHandler)
+
             .addHandler(getTodayCategoriesHandler)
             .addHandler(getThisMonthCategoriesHandler)
             .addHandler(saveTransactionHandler)
