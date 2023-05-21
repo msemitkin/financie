@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.github.msemitkin.financie.telegram.updatehandler.matcher.UpdateMatcher.textCommandMatcher;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
@@ -39,7 +40,7 @@ public class ImportStateHandler extends BaseUpdateHandler {
         .ofNullable(update.getMessage())
         .map(Message::getDocument)
         .map(Document::getMimeType)
-        .map("text/csv"::equals)
+        .map(Set.of("text/comma-separated-values", "text/csv")::contains)
         .orElse(false);
     private final UpdateMatcher cancelMatcher = textCommandMatcher(ResourceService.getValues("button.cancel"));
 
