@@ -10,7 +10,7 @@ public class TimeZoneUtils {
     }
 
     public static LocalDateTime getUTCStartOfTheDayInTimeZone(ZoneId zoneId) {
-        return getUTCStartOfTheDayInTimeZone(LocalDate.now(), zoneId);
+        return getUTCStartOfTheDayInTimeZone(LocalDate.now(zoneId), zoneId);
     }
 
     public static LocalDateTime getUTCStartOfTheDayInTimeZone(LocalDate date, ZoneId zoneId) {
