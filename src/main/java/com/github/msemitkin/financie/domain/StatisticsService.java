@@ -58,6 +58,7 @@ public class StatisticsService {
 
     private Double sum(Collection<TransactionEntity> transactions) {
         return transactions.stream()
-            .reduce(0.0, (total, transaction) -> total + transaction.getAmount(), Double::sum);
+                .mapToDouble(TransactionEntity::getAmount)
+                .sum();
     }
 }

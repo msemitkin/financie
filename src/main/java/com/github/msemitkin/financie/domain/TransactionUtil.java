@@ -8,7 +8,8 @@ public class TransactionUtil {
 
     public static double sum(List<Transaction> transactions) {
         return transactions.stream()
-            .reduce(0.0, (total, transaction) -> total + transaction.amount(), Double::sum);
+                .mapToDouble(Transaction::amount)
+                .sum();
     }
 
 }
