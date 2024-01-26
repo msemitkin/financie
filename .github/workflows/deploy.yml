@@ -45,8 +45,4 @@ jobs:
           key: ${{ secrets.KEY }}
           script_stop: true
           envs: SPRING_DATASOURCE_URL,SPRING_DATASOURCE_USERNAME,SPRING_DATASOURCE_PASSWORD,BOT_TELEGRAM_USERNAME,BOT_TELEGRAM_TOKEN,LOGGING_FILE_PATH,LOGGING_FILE_NAME,COM_GITHUB_MSEMITKIN_FINANCIE_GOOGLEMAPSPLATFORM_APIKEY
-          script: |
-            cd /root/financie
-            pkill -f FinancieBot
-            sleep 5
-            exec -a FinancieBot java -jar financie-1.3.1.jar &
+          script: ./start-bot.sh
