@@ -1,12 +1,27 @@
-on:
-  push:
-    branches:
-      #TODO keep only prod branch
-      - actions
-      - prod
+on: push
 jobs:
+  verification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+      - name: build
+        run: ./gradlew build
+      - name: test
+        run: ./gradlew test
   deploy:
     runs-on: ubuntu-latest
+    #TODO kep only prod
+    if: github.ref == 'refs/heads/prod' || github.ref == 'refs/heads/actions'
+    needs:
+      - verification
     steps:
       - name: checkout
         uses: actions/checkout@v4
