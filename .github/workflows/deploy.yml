@@ -22,7 +22,7 @@ jobs:
       - name: copy jar to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          source: "build/libs/financie-1.3.2.jar, start-bot.sh"
+          source: build/libs/financie-1.3.2.jar
           target: /root/financie
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
@@ -48,3 +48,4 @@ jobs:
           script: |
             cd /root/financie
             ./start-bot.sh
+            exit 0
