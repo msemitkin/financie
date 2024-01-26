@@ -48,4 +48,3 @@ jobs:
           script: |
             cd /root/financie
             ./start-bot.sh
-            exit 0

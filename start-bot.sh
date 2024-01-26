@@ -7,4 +7,4 @@ echo "Waiting for FinancieBot to terminate..."
 sleep 1
 done
 echo "FinancieBot terminated. Starting new instance."
-exec -a FinancieBot java -jar financie-1.3.1.jar &
+nohup java -jar financie-1.3.1.jar -a FinancieBot > /dev/null 2>&1 &
