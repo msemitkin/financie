@@ -1,0 +1,29 @@
+on:
+  push:
+    branches:
+      #TODO keep only prod branch
+      - actions
+      - prod
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+      - name: build
+        run: ./gradlew build
+      - name: copy jar to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          source: build/libs/financie-1.3.0.jar
+          target: /root/financie
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
