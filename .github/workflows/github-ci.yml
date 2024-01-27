@@ -34,15 +34,20 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
       - name: build
         run: ./gradlew build
-      - name: copy jar to server
+      - name: prepare artifacts
+        run: |
+          mkdir artifacts
+          cp build/libs/financie.jar artifacts/financie.jar
+          cp start-bot.sh artifacts/start-bot.sh
+      - name: copy artifacts to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          source: build/libs/financie.jar
+          source: "artifacts/financie.jar, artifacts/start-bot.sh"
           target: /root/financie
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
-          strip_components: 2
+          strip_components: 1
       - name: run jar on server
         uses: appleboy/ssh-action@v1.0.3
         env:
