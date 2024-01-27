@@ -13,7 +13,7 @@ jobs:
       - name: setup Gradle
         uses: gradle/actions/setup-gradle@v3
       - name: build
-        run: ./gradlew build
+        run: ./gradlew build -x test
       - name: test
         run: ./gradlew test
   deploy:
@@ -33,7 +33,7 @@ jobs:
       - name: setup Gradle
         uses: gradle/actions/setup-gradle@v3
       - name: build
-        run: ./gradlew build
+        run: ./gradlew build -x test
       - name: prepare artifacts
         run: |
           mkdir artifacts
