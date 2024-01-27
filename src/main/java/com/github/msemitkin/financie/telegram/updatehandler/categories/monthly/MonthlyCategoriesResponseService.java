@@ -21,6 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +72,7 @@ public class MonthlyCategoriesResponseService {
         LocalDateTime startOfMonth = getUTCStartOfTheMonthInTimeZone(timeZone.toZoneId()).plusMonths(monthOffset);
         LocalDateTime startOfNextMonth = startOfMonth.plusMonths(1);
         List<CategoryStatistics> statistics = statisticsService.getStatistics(userId, startOfMonth, startOfNextMonth);
-        String month = formatMonth(startOfMonth.getMonth(), locale);
+        String month = formatMonth(OffsetDateTime.now(timeZone.toZoneId()).plusMonths(monthOffset).getMonth(), locale);
 
         if (statistics.isEmpty()) {
             var text = StringSubstitutor.replace(

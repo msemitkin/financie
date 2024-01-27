@@ -93,10 +93,11 @@ public class GetDailyTransactionsHandler extends BaseUpdateHandler {
 
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
 
+        LocalDate date = LocalDate.now(timeZoneId).plusDays(offset);
         if (transactions.isEmpty()) {
-            sendNoTransactions(chatId, startOfDay.toLocalDate(), messageId, locale);
+            sendNoTransactions(chatId, date, messageId, locale);
         } else {
-            sendTransactions(chatId, startOfDay.toLocalDate(), category, transactions, messageId, locale);
+            sendTransactions(chatId, date, category, transactions, messageId, locale);
         }
     }
 

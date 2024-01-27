@@ -2,8 +2,11 @@ package com.github.msemitkin.financie.timezone;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.temporal.TemporalAdjusters;
 
 public class TimeZoneUtils {
     private TimeZoneUtils() {
@@ -21,14 +24,18 @@ public class TimeZoneUtils {
     }
 
     public static LocalDateTime getUTCStartOfTheMonthInTimeZone(ZoneId zoneId) {
-        return getUTCStartOfTheMonthInTimeZone(YearMonth.now(zoneId), zoneId);
+        OffsetDateTime startOfTheMonth = OffsetDateTime.now(zoneId)
+            .with(TemporalAdjusters.firstDayOfMonth())
+            .withHour(0)
+            .withMinute(0)
+            .withSecond(0)
+            .withNano(0);
+        return LocalDateTime.ofInstant(startOfTheMonth.toInstant(), ZoneId.of("UTC"));
     }
 
     public static LocalDateTime getUTCStartOfTheMonthInTimeZone(YearMonth yearMonth, ZoneId zoneId) {
-        return yearMonth.atDay(1)
-            .atStartOfDay()
-            .atZone(zoneId)
-            .withZoneSameInstant(ZoneId.of("UTC"))
-            .toLocalDateTime();
+        OffsetDateTime startOfTheMonth = OffsetDateTime
+            .of(yearMonth.getYear(), yearMonth.getMonthValue(), 1, 0, 0, 0, 0, ZoneOffset.of(zoneId.getId()));
+        return LocalDateTime.ofInstant(startOfTheMonth.toInstant(), ZoneId.of("UTC"));
     }
 }

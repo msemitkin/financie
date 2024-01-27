@@ -31,6 +31,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.OffsetDateTime;
 import java.time.YearMonth;
 import java.util.Comparator;
 import java.util.List;
@@ -106,7 +107,8 @@ public class GetMonthlyCategoryTransactionsHandler extends BaseUpdateHandler {
         double averagePerDayInCategory = averagePerDayService
             .getAveragePerDay(totalInCategory, YearMonth.now().plusMonths(offset), timeZone.toZoneId());
 
-        String message = getMessage(category.name(), totalInCategory, averagePerDayInCategory, startOfMonth.getMonth(), locale);
+        String message = getMessage(category.name(), totalInCategory, averagePerDayInCategory,
+            OffsetDateTime.now(timeZone.toZoneId()).plusMonths(offset).getMonth(), locale);
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(transactionsInCategory);
         editMessage(chatId, messageId, message, keyboard);
     }
