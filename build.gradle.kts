@@ -5,7 +5,6 @@ plugins {
 }
 
 group = "com.github.msemitkin.financie"
-version = "1.3.2"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
@@ -39,4 +38,8 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.jar {
+    enabled = false
 }

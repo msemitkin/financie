@@ -37,7 +37,7 @@ jobs:
       - name: copy jar to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          source: build/libs/financie-1.3.2.jar
+          source: build/libs/financie.jar
           target: /root/financie
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
