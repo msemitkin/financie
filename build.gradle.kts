@@ -1,11 +1,11 @@
 plugins {
     java
-    id("org.springframework.boot") version "3.0.2"
-    id("io.spring.dependency-management") version "1.1.0"
+    id("org.springframework.boot") version "3.2.2"
+    id("io.spring.dependency-management") version "1.1.4"
 }
 
 group = "com.github.msemitkin.financie"
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_21
 
 repositories {
     mavenCentral()
@@ -23,11 +23,14 @@ dependencies {
 
     implementation("com.opencsv:opencsv:5.7.1")
 
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
-    runtimeOnly("org.postgresql:postgresql")
 
     implementation("org.apache.commons:commons-text:1.10.0")
     implementation("com.google.maps:google-maps-services:2.2.0")
+    implementation("javax.xml.bind:jaxb-api:2.3.1")
+
+    runtimeOnly("org.postgresql:postgresql")
+
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 
@@ -36,10 +39,17 @@ dependencies {
     testImplementation("org.testcontainers:postgresql")
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
-}
+tasks {
+    withType<Test> {
+        useJUnitPlatform()
+    }
 
-tasks.jar {
-    enabled = false
+    jar {
+        enabled = false
+    }
+
+    wrapper {
+        gradleVersion = "8.5"
+        distributionType = Wrapper.DistributionType.ALL
+    }
 }
