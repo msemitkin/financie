@@ -7,7 +7,7 @@ import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.domain.TransactionUtil;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
-import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.ResponseSender;
 import com.github.msemitkin.financie.telegram.auth.UserContext;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.Callback;
@@ -21,9 +21,8 @@ import com.github.msemitkin.financie.telegram.updatehandler.matcher.UpdateMatche
 import com.github.msemitkin.financie.telegram.util.MarkdownUtil;
 import com.github.msemitkin.financie.timezone.TimeZoneUtils;
 import org.apache.commons.text.StringSubstitutor;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.ParseMode;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -31,7 +30,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -41,6 +39,7 @@ import java.util.stream.IntStream;
 
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatDate;
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
+import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getAccessibleMessageId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getFrom;
 
@@ -49,7 +48,7 @@ public class GetDailyTransactionsHandler extends BaseUpdateHandler {
     private final TransactionService transactionService;
     private final UserService userService;
     private final CategoryService categoryService;
-    private final TelegramApi telegramApi;
+    private final ResponseSender responseSender;
     private final CallbackDataExtractor callbackDataExtractor;
     private final CallbackService callbackService;
 
@@ -58,14 +57,14 @@ public class GetDailyTransactionsHandler extends BaseUpdateHandler {
         UserService userService,
         CategoryService categoryService,
         CallbackService callbackService,
-        TelegramApi telegramApi,
+        ResponseSender responseSender,
         CallbackDataExtractor callbackDataExtractor
     ) {
         super(UpdateMatcher.callbackQueryMatcher(callbackService, CallbackType.GET_CATEGORY_TRANSACTIONS_FOR_DAY));
         this.transactionService = transactionService;
         this.userService = userService;
         this.categoryService = categoryService;
-        this.telegramApi = telegramApi;
+        this.responseSender = responseSender;
         this.callbackDataExtractor = callbackDataExtractor;
         this.callbackService = callbackService;
     }
@@ -91,7 +90,7 @@ public class GetDailyTransactionsHandler extends BaseUpdateHandler {
             .sorted(Comparator.comparing(Transaction::time).reversed())
             .toList();
 
-        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+        Integer messageId = getAccessibleMessageId(update.getCallbackQuery().getMessage());
 
         LocalDate date = LocalDate.now(timeZoneId).plusDays(offset);
         if (transactions.isEmpty()) {
@@ -101,12 +100,12 @@ public class GetDailyTransactionsHandler extends BaseUpdateHandler {
         }
     }
 
-    private void sendNoTransactions(long chatId, LocalDate date, Integer messageId, Locale locale) {
+    private void sendNoTransactions(long chatId, LocalDate date, @Nullable Integer messageId, Locale locale) {
         String message = StringSubstitutor.replace(
             ResourceService.getValue("no-transactions-on-date", locale),
             Map.of("date", formatDate(date))
         );
-        reply(chatId, messageId, Collections.emptyList(), message);
+        responseSender.sendResponse(chatId, messageId, null, message, false);
     }
 
     private void sendTransactions(
@@ -114,7 +113,7 @@ public class GetDailyTransactionsHandler extends BaseUpdateHandler {
         LocalDate date,
         Category category,
         List<Transaction> transactions,
-        Integer messageId,
+        @Nullable Integer messageId,
         Locale locale
     ) {
         double total = TransactionUtil.sum(transactions);
@@ -126,7 +125,7 @@ public class GetDailyTransactionsHandler extends BaseUpdateHandler {
             "date", formatDate(date)
         );
         String message = MarkdownUtil.escapeMarkdownV2(StringSubstitutor.replace(messageTemplate, params));
-        reply(chatId, messageId, rows, message);
+        responseSender.sendResponse(chatId, messageId, InlineKeyboardMarkup.builder().keyboard(rows).build(), message);
     }
 
     private List<List<InlineKeyboardButton>> getKeyboard(List<Transaction> transactions) {
@@ -147,20 +146,5 @@ public class GetDailyTransactionsHandler extends BaseUpdateHandler {
             })
             .map(List::of)
             .toList();
-    }
-
-    private void reply(
-        long chatId,
-        int messageId,
-        List<List<InlineKeyboardButton>> rows,
-        String message
-    ) {
-        telegramApi.execute(EditMessageText.builder()
-            .chatId(chatId)
-            .messageId(messageId)
-            .text(message)
-            .parseMode(ParseMode.MARKDOWNV2)
-            .replyMarkup(InlineKeyboardMarkup.builder().keyboard(rows).build())
-            .build());
     }
 }

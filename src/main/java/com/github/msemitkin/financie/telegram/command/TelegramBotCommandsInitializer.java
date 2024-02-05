@@ -1,7 +1,7 @@
 package com.github.msemitkin.financie.telegram.command;
 
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
@@ -10,7 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScope
 import java.util.List;
 
 @Component
-public class TelegramBotCommandsInitializer implements CommandLineRunner {
+public class TelegramBotCommandsInitializer implements InitializingBean {
     private final TelegramApi telegramApi;
     private final List<BotCommand> commands;
 
@@ -23,7 +23,7 @@ public class TelegramBotCommandsInitializer implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) {
+    public void afterPropertiesSet() {
         initCommands();
     }
 

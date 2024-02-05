@@ -19,7 +19,7 @@ dependencies {
 
     implementation("com.google.code.gson:gson:2.10.1")
 
-    implementation("org.telegram:telegrambots-spring-boot-starter:6.5.0")
+    implementation("org.telegram:telegrambots-spring-boot-starter:6.9.7.0")
 
     implementation("com.opencsv:opencsv:5.7.1")
 

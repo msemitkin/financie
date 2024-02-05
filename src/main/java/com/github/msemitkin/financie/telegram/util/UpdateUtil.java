@@ -4,10 +4,12 @@ import com.github.msemitkin.financie.domain.Location;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.MaybeInaccessibleMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
+import java.util.Objects;
 import java.util.Optional;
 
 public class UpdateUtil {
@@ -26,7 +28,7 @@ public class UpdateUtil {
             .map(Message::getChatId)
             .orElseGet(() -> Optional.ofNullable(update.getCallbackQuery())
                 .map(CallbackQuery::getMessage)
-                .map(Message::getChatId)
+                .map(MaybeInaccessibleMessage::getChatId)
                 .orElse(null));
     }
 
@@ -61,5 +63,12 @@ public class UpdateUtil {
             .map(Message::getLocation)
             .map(loc -> new Location(loc.getLatitude(), loc.getLongitude()))
             .orElse(null);
+    }
+
+    public static Integer getAccessibleMessageId(@NonNull MaybeInaccessibleMessage maybeInaccessibleMessage) {
+        if (Objects.requireNonNull(maybeInaccessibleMessage) instanceof Message message) {
+            return message.getMessageId();
+        }
+        return null;
     }
 }

@@ -8,7 +8,7 @@ import com.github.msemitkin.financie.domain.TransactionService;
 import com.github.msemitkin.financie.domain.TransactionUtil;
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.resources.ResourceService;
-import com.github.msemitkin.financie.telegram.api.TelegramApi;
+import com.github.msemitkin.financie.telegram.ResponseSender;
 import com.github.msemitkin.financie.telegram.auth.UserContext;
 import com.github.msemitkin.financie.telegram.auth.UserContextHolder;
 import com.github.msemitkin.financie.telegram.callback.Callback;
@@ -19,12 +19,9 @@ import com.github.msemitkin.financie.telegram.callback.command.GetMonthlyCategor
 import com.github.msemitkin.financie.telegram.callback.command.GetTransactionActionsCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.BaseUpdateHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.matcher.UpdateMatcher;
-import jakarta.annotation.Nullable;
 import org.apache.commons.text.StringSubstitutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.ParseMode;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -44,6 +41,7 @@ import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatMo
 import static com.github.msemitkin.financie.telegram.util.FormatterUtil.formatNumber;
 import static com.github.msemitkin.financie.telegram.util.MarkdownUtil.escapeMarkdownV2;
 import static com.github.msemitkin.financie.telegram.util.TransactionUtil.getTransactionRepresentation;
+import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getAccessibleMessageId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getSenderTelegramId;
 import static com.github.msemitkin.financie.timezone.TimeZoneUtils.getUTCStartOfTheMonthInTimeZone;
@@ -54,7 +52,7 @@ public class GetMonthlyCategoryTransactionsHandler extends BaseUpdateHandler {
     private final TransactionService transactionService;
     private final CategoryService categoryService;
     private final AveragePerDayService averagePerDayService;
-    private final TelegramApi telegramApi;
+    private final ResponseSender responseSender;
     private final CallbackDataExtractor callbackDataExtractor;
     private final CallbackService callbackService;
     private final int maxNumberOfStatisticsRecords;
@@ -65,7 +63,7 @@ public class GetMonthlyCategoryTransactionsHandler extends BaseUpdateHandler {
         CategoryService categoryService,
         CallbackService callbackService,
         AveragePerDayService averagePerDayService,
-        TelegramApi telegramApi,
+        ResponseSender responseSender,
         CallbackDataExtractor callbackDataExtractor,
         @Value("${com.github.msemitkin.financie.statistics.max-number-of-displayed-records}")
         int maxNumberOfStatisticsRecords
@@ -75,7 +73,7 @@ public class GetMonthlyCategoryTransactionsHandler extends BaseUpdateHandler {
         this.transactionService = transactionService;
         this.categoryService = categoryService;
         this.averagePerDayService = averagePerDayService;
-        this.telegramApi = telegramApi;
+        this.responseSender = responseSender;
         this.callbackDataExtractor = callbackDataExtractor;
         this.callbackService = callbackService;
         this.maxNumberOfStatisticsRecords = maxNumberOfStatisticsRecords;
@@ -90,7 +88,7 @@ public class GetMonthlyCategoryTransactionsHandler extends BaseUpdateHandler {
         var callbackData = callbackDataExtractor.getCallbackData(update, GetMonthlyCategoryTransactionsCommand.class);
         long categoryId = callbackData.categoryId();
         int offset = callbackData.offset();
-        Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
+        Integer messageId = getAccessibleMessageId(update.getCallbackQuery().getMessage());
         long userTelegramId = getSenderTelegramId(update);
         long chatId = getChatId(update);
         long userId = userService.getUserByTelegramId(userTelegramId).id();
@@ -110,7 +108,7 @@ public class GetMonthlyCategoryTransactionsHandler extends BaseUpdateHandler {
         String message = getMessage(category.name(), totalInCategory, averagePerDayInCategory,
             OffsetDateTime.now(timeZone.toZoneId()).plusMonths(offset).getMonth(), locale);
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(transactionsInCategory);
-        editMessage(chatId, messageId, message, keyboard);
+        responseSender.sendResponse(chatId, messageId, keyboard, message);
     }
 
     private static String getMessage(
@@ -149,21 +147,5 @@ public class GetMonthlyCategoryTransactionsHandler extends BaseUpdateHandler {
         return InlineKeyboardMarkup.builder()
             .keyboard(rows)
             .build();
-    }
-
-    private void editMessage(
-        Long chatId,
-        Integer messageId,
-        String text,
-        @Nullable InlineKeyboardMarkup replyKeyboard
-    ) {
-        EditMessageText editMessage = EditMessageText.builder()
-            .chatId(chatId)
-            .messageId(messageId)
-            .text(text)
-            .parseMode(ParseMode.MARKDOWNV2)
-            .replyMarkup(replyKeyboard)
-            .build();
-        telegramApi.execute(editMessage);
     }
 }
