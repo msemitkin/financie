@@ -9,7 +9,7 @@ import com.github.msemitkin.financie.telegram.updatehandler.categories.daily.Get
 import com.github.msemitkin.financie.telegram.updatehandler.categories.daily.GetTodayCategoriesHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.categories.monthly.GetMonthlyCategoriesHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.categories.monthly.GetThisMonthCategoriesHandler;
-import com.github.msemitkin.financie.telegram.updatehandler.system.AuthorHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.system.ContactUsHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.system.HelpHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.system.MenuHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.system.StartMessageHandler;
@@ -29,7 +29,7 @@ public class UpdateHandlerChainConfig {
     public UpdateHandlerChain updateHandlerChain(
         StartMessageHandler startMessageHandler,
         HelpHandler helpHandler,
-        AuthorHandler authorHandler,
+        ContactUsHandler contactUsHandler,
         GetDailyCategoriesHandler getDailyCategoriesHandler,
         GetDailyTransactionsHandler getDailyTransactionsHandler,
         GetMonthlyCategoriesHandler getMonthlyCategoriesHandler,
@@ -51,7 +51,7 @@ public class UpdateHandlerChainConfig {
             //commands
             .addHandler(startMessageHandler)
             .addHandler(helpHandler)
-            .addHandler(authorHandler)
+            .addHandler(contactUsHandler)
             //callback queries
             .addHandler(getDailyCategoriesHandler)
             .addHandler(getDailyTransactionsHandler)

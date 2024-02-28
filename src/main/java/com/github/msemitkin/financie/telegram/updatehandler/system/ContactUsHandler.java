@@ -16,20 +16,19 @@ import static com.github.msemitkin.financie.telegram.util.UpdateUtil.getChatId;
 import static java.util.Objects.requireNonNull;
 
 @Component
-public class AuthorHandler extends BaseUpdateHandler {
+public class ContactUsHandler extends BaseUpdateHandler {
     private final TelegramApi telegramApi;
 
-    public AuthorHandler(TelegramApi telegramApi) {
-        super(UpdateMatcher.textCommandMatcher(BotCommand.AUTHOR.getCommand()));
+    public ContactUsHandler(TelegramApi telegramApi) {
+        super(UpdateMatcher.textCommandMatcher(BotCommand.CONTACT_US.getCommand()));
         this.telegramApi = telegramApi;
     }
-
 
     @Override
     protected void handleUpdate(Update update) {
         Long chatId = requireNonNull(getChatId(update));
         String text = MarkdownUtil.escapeMarkdownV2(
-            ResourceService.getValue("author-message", UserContextHolder.getContext().locale()));
+            ResourceService.getValue("contact-us-message", UserContextHolder.getContext().locale()));
         SendMessage sendMessage = SendMessage.builder()
             .chatId(chatId)
             .text(text)

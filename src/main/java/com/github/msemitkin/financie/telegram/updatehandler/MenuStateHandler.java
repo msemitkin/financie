@@ -45,6 +45,10 @@ public class MenuStateHandler extends BaseUpdateHandler {
         textCommandMatcher(ResourceService.getValues("button.settings"));
     private final UpdateMatcher backMatcher =
         textCommandMatcher(ResourceService.getValues("button.back"));
+    private final UpdateMatcher contactUsMatcher =
+        textCommandMatcher(ResourceService.getValues("button.contact-us"));
+    private final UpdateMatcher helpMatcher =
+        textCommandMatcher(ResourceService.getValues("button.help"));
 
     private final TelegramApi telegramApi;
     private final StateService stateService;
@@ -135,6 +139,22 @@ public class MenuStateHandler extends BaseUpdateHandler {
             telegramApi.execute(SendMessage.builder()
                 .chatId(chatId)
                 .text(requireNonNull(getMessage(update)))
+                .replyMarkup(keyboardService.getKeyboardForState(nextState, locale))
+                .build());
+            stateService.setStateType(user.id(), nextState);
+        } else if (contactUsMatcher.match(update)) {
+            StateType nextState = StateType.IDLE;
+            telegramApi.execute(SendMessage.builder()
+                .chatId(chatId)
+                .text(ResourceService.getValue("contact-us-message", locale))
+                .replyMarkup(keyboardService.getKeyboardForState(nextState, locale))
+                .build());
+            stateService.setStateType(user.id(), nextState);
+        } else if (helpMatcher.match(update)) {
+            StateType nextState = StateType.IDLE;
+            telegramApi.execute(SendMessage.builder()
+                .chatId(chatId)
+                .text(ResourceService.getValue("help-message", locale))
                 .replyMarkup(keyboardService.getKeyboardForState(nextState, locale))
                 .build());
             stateService.setStateType(user.id(), nextState);

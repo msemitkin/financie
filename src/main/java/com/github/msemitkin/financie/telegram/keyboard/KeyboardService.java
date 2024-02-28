@@ -25,7 +25,9 @@ public class KeyboardService {
             case MENU -> keyboard(
                 row(textButton(ResourceService.getValue("button.import", locale)),
                     textButton(ResourceService.getValue("button.export", locale))),
-                row(textButton(ResourceService.getValue("button.settings", locale))),
+                row(textButton(ResourceService.getValue("button.settings", locale)),
+                    textButton(ResourceService.getValue("button.contact-us", locale)),
+                    textButton(ResourceService.getValue("button.help", locale))),
                 row(textButton(ResourceService.getValue("button.back", locale)))
             );
             case SETTINGS -> keyboard(

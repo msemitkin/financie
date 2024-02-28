@@ -3,7 +3,7 @@ package com.github.msemitkin.financie.telegram.command;
 public enum BotCommand {
     START("/start", "command.start.description"),
     HELP("/help", "command.help.description"),
-    AUTHOR("/author", "command.author.description");
+    CONTACT_US("/contactus", "command.contact-us.description");
 
     private final String command;
     private final String descriptionCode;
