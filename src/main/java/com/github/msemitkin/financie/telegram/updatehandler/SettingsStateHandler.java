@@ -93,7 +93,7 @@ public class SettingsStateHandler extends BaseUpdateHandler {
         } else {
             telegramApi.execute(SendMessage.builder()
                 .chatId(chatId)
-                .text(ResourceService.getValue("sorry-message", locale))
+                .text(ResourceService.getValue("settings.sorry-message", locale))
                 .build());
         }
     }

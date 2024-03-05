@@ -161,7 +161,7 @@ public class MenuStateHandler extends BaseUpdateHandler {
         } else {
             telegramApi.execute(SendMessage.builder()
                 .chatId(chatId)
-                .text(ResourceService.getValue("sorry-message", locale))
+                .text(ResourceService.getValue("menu.sorry-message", locale))
                 .build());
         }
     }

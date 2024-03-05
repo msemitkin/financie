@@ -116,7 +116,7 @@ public class ImportStateHandler extends BaseUpdateHandler {
         } else {
             telegramApi.execute(SendMessage.builder()
                 .chatId(chatId)
-                .text(ResourceService.getValue("sorry-message", userLocale))
+                .text(ResourceService.getValue("import.sorry-message", userLocale))
                 .build());
         }
     }
