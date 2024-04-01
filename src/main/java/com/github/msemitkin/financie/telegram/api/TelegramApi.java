@@ -1,26 +1,26 @@
 package com.github.msemitkin.financie.telegram.api;
 
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.bots.DefaultAbsSender;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.objects.File;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.io.Serializable;
 
 @Component
 public class TelegramApi {
-    private final DefaultAbsSender absSender;
+    private final TelegramClient telegramClient;
 
-    public TelegramApi(DefaultAbsSender absSender) {
-        this.absSender = absSender;
+    public TelegramApi(TelegramClient telegramClient) {
+        this.telegramClient = telegramClient;
     }
 
     public <T extends Serializable, M extends BotApiMethod<T>> T execute(M method) {
         try {
-            return absSender.execute(method);
+            return telegramClient.execute(method);
         } catch (TelegramApiException e) {
             throw new TelegramApiMethodException(e);
         }
@@ -28,7 +28,7 @@ public class TelegramApi {
 
     public Message execute(SendDocument sendDocument) {
         try {
-            return absSender.execute(sendDocument);
+            return telegramClient.execute(sendDocument);
         } catch (TelegramApiException e) {
             throw new TelegramApiMethodException(e);
         }
@@ -36,7 +36,7 @@ public class TelegramApi {
 
     public java.io.File downloadFile(File file) {
         try {
-            return absSender.downloadFile(file);
+            return telegramClient.downloadFile(file);
         } catch (TelegramApiException e) {
             throw new TelegramApiMethodException(e);
         }
