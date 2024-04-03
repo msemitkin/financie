@@ -27,8 +27,10 @@ public class TokenAuthFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         String tokenValue = request.getHeader("X-Telegram-Bot-Api-Secret-Token");
         if (token.equals(tokenValue)) {
+            logger.trace("Authorized request");
             filterChain.doFilter(request, response);
         } else {
+            logger.error("Unauthorized request");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
     }

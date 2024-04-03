@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.lang.NonNull;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
@@ -35,7 +34,6 @@ public class UpdateListener {
         this.userService = userService;
     }
 
-    @Async
     @EventListener(UpdateReceivedEvent.class)
     public void onUpdateReceived(UpdateReceivedEvent event) {
         try {
@@ -58,7 +56,7 @@ public class UpdateListener {
         return Optional.of(user)
             .map(com.github.msemitkin.financie.domain.User::languageCode)
             .filter(SupportedLanguageChecker::isSupported)
-            .map(Locale::new)
+            .map(Locale::of)
             .orElse(Locale.getDefault());
     }
 
@@ -73,7 +71,7 @@ public class UpdateListener {
         if (from != null && chatId != null) {
             return userService.saveOrUpdateUser(UserMapper.toSaveOrUpdateUserCommand(from, chatId));
         } else {
-            logger.info("Failed to update user info: {}", update);
+            logger.error("Failed to update user info: {}", update);
             throw new RuntimeException();
         }
     }

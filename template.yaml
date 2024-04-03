@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  FinancieBotFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.github.msemitkin.financie.lambda.StreamLambdaHandler::handleRequest
+      Runtime: java21
+      CodeUri: .
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+      Architectures:
+        - x86_64
+      MemorySize: 512
+#      SnapStart:
+#        ApplyOn: "PublishedVersions"

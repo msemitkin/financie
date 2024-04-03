@@ -39,13 +39,13 @@ public class BotConfig {
                     boolean result = telegramApi.execute(value);
                     logger.info("Set webhook result: {}", result ? "SUCCESS" : "FAIL");
                 })
-                .orElse(null),
+                .orElse(() -> logger.info("No webhook to set")),
             deleteWebhook
                 .<Runnable>map(webhook -> () -> {
                     boolean result = telegramApi.execute(webhook);
                     logger.info("Delete webhook result: {}", result ? "SUCCESS" : "FAIL");
                 })
-                .orElse(null)
+                .orElse(() -> logger.info("Webhook not deleted"))
         );
     }
 
@@ -63,7 +63,7 @@ public class BotConfig {
         return new OkHttpTelegramClient(okHttpClient, token);
     }
 
-    @Bean
+    //    @Bean
     public SetWebhook setWebhook(
         @Value("${bot.telegram.url}") String url,
         @Value("${bot.telegram.webhook-secret-token}") String webhookSecretToken
@@ -74,7 +74,7 @@ public class BotConfig {
             .build();
     }
 
-    @Bean
+    //    @Bean
     public DeleteWebhook deleteWebhook() {
         return DeleteWebhook.builder()
             .build();

@@ -16,6 +16,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.flywaydb:flyway-core")
+    implementation("com.amazonaws.serverless:aws-serverless-java-container-springboot3:2.0.0")
 
     implementation("com.google.code.gson:gson:2.10.1")
 
@@ -44,10 +45,6 @@ dependencies {
 tasks {
     withType<Test> {
         useJUnitPlatform()
-    }
-
-    jar {
-        enabled = false
     }
 
     wrapper {

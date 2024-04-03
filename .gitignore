@@ -38,3 +38,5 @@ out/
 
 scripts
 .env
+.aws-sam
+samconfig.toml
