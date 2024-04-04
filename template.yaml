@@ -7,6 +7,7 @@ Resources:
     Properties:
       Handler: com.github.msemitkin.financie.lambda.StreamLambdaHandler::handleRequest
       Runtime: java21
+      Timeout: 10
       CodeUri: .
       Events:
         ApiEvent:
@@ -16,6 +17,7 @@ Resources:
             Method: ANY
       Architectures:
         - x86_64
-      MemorySize: 512
-#      SnapStart:
-#        ApplyOn: "PublishedVersions"
+      MemorySize: 3008
+      SnapStart:
+        ApplyOn: "PublishedVersions"
+      AutoPublishAlias: "prod"
