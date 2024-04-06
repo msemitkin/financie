@@ -1,6 +1,19 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
+Parameters:
+  TelegramBotToken:
+    Type: String
+  DatabaseUrl:
+    Type: String
+  DatabaseUsername:
+    Type: String
+  DatabasePassword:
+    Type: String
+  GoogleMapsApiKey:
+    Type: String
+  TelegramWebhookSecretToken:
+    Type: String
 Resources:
   FinancieBotFunction:
     Type: AWS::Serverless::Function
@@ -9,6 +22,14 @@ Resources:
       Runtime: java21
       Timeout: 10
       CodeUri: .
+      Environment:
+        Variables:
+          BOT_TELEGRAM_TOKEN: !Ref TelegramBotToken
+          SPRING_DATASOURCE_URL: !Ref DatabaseUrl
+          SPRING_DATASOURCE_USERNAME: !Ref DatabaseUsername
+          SPRING_DATASOURCE_PASSWORD: !Ref DatabasePassword
+          COM_GITHUB_MSEMITKIN_FINANCIE_GOOGLEMAPSPLATFORM_API_KEY: !Ref GoogleMapsApiKey
+          BOT_TELEGRAM_WEBHOOK_SECRET_TOKEN: !Ref TelegramWebhookSecretToken
       Events:
         ApiEvent:
           Type: Api
