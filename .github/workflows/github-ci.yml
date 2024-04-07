@@ -22,7 +22,7 @@ jobs:
         run: ./gradlew test
   deploy:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/prod' || github.ref == 'refs/heads/webhook'
+    if: github.ref == 'refs/heads/prod'
     needs:
       - verification
     steps:
