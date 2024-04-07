@@ -22,7 +22,7 @@ jobs:
         run: ./gradlew test
   deploy:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/prod'
+    if: github.ref == 'refs/heads/prod' || github.ref == 'refs/heads/webhook'
     needs:
       - verification
     steps:
@@ -35,25 +35,16 @@ jobs:
           java-version: 21
       - name: setup Gradle
         uses: gradle/actions/setup-gradle@v3
-      - name: build
-        run: ./gradlew build -x test
-      - name: prepare artifacts
-        run: |
-          mkdir artifacts
-          cp build/libs/financie.jar artifacts/financie.jar
-          cp start-bot.sh artifacts/start-bot.sh
-      - name: copy artifacts to server
-        uses: appleboy/scp-action@v0.1.7
+      - uses: aws-actions/setup-sam@v2
         with:
-          source: "artifacts/financie.jar, artifacts/start-bot.sh"
-          target: /root/financie
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          strip_components: 1
-      - name: run jar on server
-        uses: appleboy/ssh-action@v1.0.3
-        env:
+          use-installer: true
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+      - run: sam build
+      - env:
           SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
           SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
@@ -61,14 +52,4 @@ jobs:
           BOT_TELEGRAM_TOKEN: ${{ secrets.BOT_TELEGRAM_TOKEN }}
           COM_GITHUB_MSEMITKIN_FINANCIE_GOOGLEMAPSPLATFORM_APIKEY: ${{ secrets.COM_GITHUB_MSEMITKIN_FINANCIE_GOOGLEMAPSPLATFORM_APIKEY }}
           BOT_TELEGRAM_WEBHOOK_SECRET_TOKEN: ${{ secrets.BOT_TELEGRAM_WEBHOOK_SECRET_TOKEN }}
-          LOGGING_FILE_PATH: /logs
-          LOGGING_FILE_NAME: logs.log
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          script_stop: true
-          envs: SPRING_DATASOURCE_URL,SPRING_DATASOURCE_USERNAME,SPRING_DATASOURCE_PASSWORD,BOT_TELEGRAM_USERNAME,BOT_TELEGRAM_TOKEN,LOGGING_FILE_PATH,LOGGING_FILE_NAME,COM_GITHUB_MSEMITKIN_FINANCIE_GOOGLEMAPSPLATFORM_APIKEY,BOT_TELEGRAM_WEBHOOK_SECRET_TOKEN
-          script: |
-            cd /root/financie
-            ./start-bot.sh
+        run: sam deploy --stack-name financie --resolve-s3 --s3-prefix financie --region eu-central-1 --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset --parameter-overrides TelegramBotToken=$BOT_TELEGRAM_TOKEN DatabaseUrl=$SPRING_DATASOURCE_URL DatabaseUsername=$SPRING_DATASOURCE_USERNAME DatabasePassword=$SPRING_DATASOURCE_PASSWORD GoogleMapsApiKey=$COM_GITHUB_MSEMITKIN_FINANCIE_GOOGLEMAPSPLATFORM_APIKEY TelegramWebhookSecretToken=$BOT_TELEGRAM_WEBHOOK_SECRET_TOKEN
