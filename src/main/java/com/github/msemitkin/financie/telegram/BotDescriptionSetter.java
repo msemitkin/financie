@@ -4,7 +4,6 @@ import com.github.msemitkin.financie.locale.LanguageCode;
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.description.SetMyDescription;
 import org.telegram.telegrambots.meta.api.methods.description.SetMyShortDescription;
 
@@ -13,7 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Component
+//@Component
 public class BotDescriptionSetter implements InitializingBean {
     private final TelegramApi telegramApi;
 

@@ -4,7 +4,6 @@ import com.github.msemitkin.financie.locale.LanguageCode;
 import com.github.msemitkin.financie.resources.ResourceService;
 import com.github.msemitkin.financie.telegram.api.TelegramApi;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 
@@ -12,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-@Component
+//@Component
 public class TelegramBotCommandsInitializer implements InitializingBean {
     private final TelegramApi telegramApi;
 
