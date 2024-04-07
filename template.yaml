@@ -30,8 +30,12 @@ Resources:
           SPRING_DATASOURCE_PASSWORD: !Ref DatabasePassword
           COM_GITHUB_MSEMITKIN_FINANCIE_GOOGLEMAPSPLATFORM_API_KEY: !Ref GoogleMapsApiKey
           BOT_TELEGRAM_WEBHOOK_SECRET_TOKEN: !Ref TelegramWebhookSecretToken
-      FunctionUrlConfig:
-        AuthType: NONE
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
       Architectures:
         - x86_64
       MemorySize: 3008
