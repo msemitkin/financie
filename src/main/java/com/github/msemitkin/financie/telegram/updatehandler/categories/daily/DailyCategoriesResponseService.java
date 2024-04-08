@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -71,7 +72,7 @@ class DailyCategoriesResponseService {
             );
             var keyboardMarkup = InlineKeyboardMarkup.builder()
                 .keyboardRow(getPageButtons(dayOffset, userLocale))
-                .keyboardRow(List.of(getAddTransactionButton(dayOffset, userLocale)))
+                .keyboardRow(new InlineKeyboardRow(getAddTransactionButton(dayOffset, userLocale)))
                 .build();
             return new Response(escapeMarkdownV2(message), keyboardMarkup);
         } else {
@@ -94,12 +95,12 @@ class DailyCategoriesResponseService {
         return statisticsService.getStatistics(userId, startOfTheDay, startOfTheDay.plusDays(1));
     }
 
-    private List<InlineKeyboardButton> getPageButtons(int dayOffset, Locale locale) {
+    private InlineKeyboardRow getPageButtons(int dayOffset, Locale locale) {
         var leftButton = button(ResourceService.getValue("button.left", locale),
             getPageButtonCallbackData(dayOffset - 1));
         var rightButton = button(ResourceService.getValue("button.right", locale),
             getPageButtonCallbackData(dayOffset + 1));
-        return dayOffset == 0 ? List.of(leftButton) : List.of(leftButton, rightButton);
+        return new InlineKeyboardRow(dayOffset == 0 ? List.of(leftButton) : List.of(leftButton, rightButton));
     }
 
     private String getPageButtonCallbackData(int dayOffset) {
@@ -107,17 +108,17 @@ class DailyCategoriesResponseService {
         return callbackService.saveCallback(new Callback<>(CallbackType.GET_CATEGORIES_FOR_DAY, command)).toString();
     }
 
-    private List<List<InlineKeyboardButton>> getKeyboard(
+    private List<InlineKeyboardRow> getKeyboard(
         List<CategoryStatistics> statistics,
         int dayOffset,
         Locale locale
     ) {
-        List<List<InlineKeyboardButton>> keyboard = statistics.stream()
+        List<InlineKeyboardRow> keyboard = statistics.stream()
             .map(tran -> getInlineButton(tran, dayOffset, locale))
-            .map(List::of)
+            .map(InlineKeyboardRow::new)
             .collect(Collectors.toCollection(ArrayList::new));
         keyboard.add(getPageButtons(dayOffset, locale));
-        keyboard.add(List.of(getAddTransactionButton(dayOffset, locale)));
+        keyboard.add(new InlineKeyboardRow(getAddTransactionButton(dayOffset, locale)));
         return keyboard;
     }
 

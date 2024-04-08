@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -117,7 +118,7 @@ public class GetDailyTransactionsHandler extends BaseUpdateHandler {
         Locale locale
     ) {
         double total = TransactionUtil.sum(transactions);
-        List<List<InlineKeyboardButton>> rows = getKeyboard(transactions);
+        List<InlineKeyboardRow> rows = getKeyboard(transactions);
         String messageTemplate = ResourceService.getValue("transactions-for-day-in-category", locale);
         Map<String, String> params = Map.of(
             "category", category.name(),
@@ -128,7 +129,7 @@ public class GetDailyTransactionsHandler extends BaseUpdateHandler {
         responseSender.sendResponse(chatId, messageId, InlineKeyboardMarkup.builder().keyboard(rows).build(), message);
     }
 
-    private List<List<InlineKeyboardButton>> getKeyboard(List<Transaction> transactions) {
+    private List<InlineKeyboardRow> getKeyboard(List<Transaction> transactions) {
         return IntStream.range(0, transactions.size())
             .mapToObj(index -> {
                 Transaction tran = transactions.get(index);
@@ -139,12 +140,12 @@ public class GetDailyTransactionsHandler extends BaseUpdateHandler {
                     new GetTransactionActionsCommand(tran.id())
                 );
                 UUID callbackId = callbackService.saveCallback(callback);
-                return InlineKeyboardButton.builder()
+                return (InlineKeyboardButton) InlineKeyboardButton.builder()
                     .text(text)
                     .callbackData(callbackId.toString())
                     .build();
             })
-            .map(List::of)
+            .map(InlineKeyboardRow::new)
             .toList();
     }
 }

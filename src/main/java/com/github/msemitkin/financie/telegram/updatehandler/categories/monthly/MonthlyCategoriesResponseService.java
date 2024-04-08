@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -97,7 +98,7 @@ public class MonthlyCategoriesResponseService {
     }
 
 
-    private List<InlineKeyboardButton> getPageButtons(int monthOffset, Locale locale) {
+    private InlineKeyboardRow getPageButtons(int monthOffset, Locale locale) {
         var leftButton = button(
             ResourceService.getValue("button.left", locale),
             getPageButtonCallbackData(monthOffset - 1));
@@ -105,7 +106,7 @@ public class MonthlyCategoriesResponseService {
             ResourceService.getValue("button.right", locale),
             getPageButtonCallbackData(monthOffset + 1)
         );
-        return monthOffset == 0 ? List.of(leftButton) : List.of(leftButton, rightButton);
+        return new InlineKeyboardRow(monthOffset == 0 ? List.of(leftButton) : List.of(leftButton, rightButton));
     }
 
     private InlineKeyboardButton button(String text, String callbackData) {
@@ -129,7 +130,7 @@ public class MonthlyCategoriesResponseService {
     }
 
     private InlineKeyboardMarkup getKeyboard(List<CategoryStatistics> statistics, int monthOffset, Locale locale) {
-        List<List<InlineKeyboardButton>> rows = statistics.stream()
+        List<InlineKeyboardRow> rows = statistics.stream()
             .map(stats -> {
                 String text = "%s: %s".formatted(formatNumber(stats.amount()), stats.categoryName());
                 var callback = new Callback<>(
@@ -139,7 +140,7 @@ public class MonthlyCategoriesResponseService {
                 UUID callbackId = callbackService.saveCallback(callback);
                 return button(text, callbackId.toString());
             })
-            .map(List::of)
+            .map(InlineKeyboardRow::new)
             .limit(maxNumberOfStatisticsRecords)
             .collect(Collectors.toCollection(ArrayList::new));
         rows.add(getPageButtons(monthOffset, locale));

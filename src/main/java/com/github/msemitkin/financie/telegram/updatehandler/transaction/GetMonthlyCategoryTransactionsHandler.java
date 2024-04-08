@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -129,7 +130,7 @@ public class GetMonthlyCategoryTransactionsHandler extends BaseUpdateHandler {
     }
 
     private InlineKeyboardMarkup getKeyboardMarkup(List<Transaction> transactionsInCategory) {
-        List<List<InlineKeyboardButton>> rows = transactionsInCategory.stream()
+        List<InlineKeyboardRow> rows = transactionsInCategory.stream()
             .map(transaction -> {
                 var callback = new Callback<>(
                     CallbackType.GET_TRANSACTION_ACTIONS,
@@ -141,7 +142,7 @@ public class GetMonthlyCategoryTransactionsHandler extends BaseUpdateHandler {
                     .callbackData(callbackId.toString())
                     .build();
             })
-            .map(List::of)
+            .map(InlineKeyboardRow::new)
             .limit(maxNumberOfStatisticsRecords)
             .toList();
         return InlineKeyboardMarkup.builder()

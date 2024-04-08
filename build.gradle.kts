@@ -22,8 +22,8 @@ dependencies {
 
     implementation("com.google.code.gson:gson:2.10.1")
 
-    implementation("org.telegram:telegrambots-client:7.0.0-rc0")
-    implementation("org.telegram:telegrambots-springboot-webhook-starter:7.0.0-rc0")
+    implementation("org.telegram:telegrambots-client:7.2.0")
+    implementation("org.telegram:telegrambots-springboot-webhook-starter:7.2.0")
 
     implementation("com.opencsv:opencsv:5.7.1")
 

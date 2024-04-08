@@ -48,7 +48,8 @@ public class TelegramBotCommandsInitializer implements InitializingBean {
         List<BotCommand> botCommands
     ) {
         return botCommands.stream()
-            .map(command -> org.telegram.telegrambots.meta.api.objects.commands.BotCommand.builder()
+            .map(command -> (org.telegram.telegrambots.meta.api.objects.commands.BotCommand)
+                org.telegram.telegrambots.meta.api.objects.commands.BotCommand.builder()
                 .command(command.getCommand())
                 .description(ResourceService.getValue(command.getDescriptionCode(), locale))
                 .build())

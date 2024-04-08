@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
-import java.util.List;
 import java.util.UUID;
 
 import static com.github.msemitkin.financie.telegram.callback.CallbackType.DELETE_TRANSACTION;
@@ -60,7 +60,7 @@ public class GetTransactionActionsMenuHandler extends BaseUpdateHandler {
             .callbackData(callbackId.toString())
             .build();
         InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
-            .keyboardRow(List.of(inlineKeyboardButton))
+            .keyboardRow(new InlineKeyboardRow(inlineKeyboardButton))
             .build();
         String transaction = getTransactionRepresentation(transactionService.getTransaction(transactionId));
 
