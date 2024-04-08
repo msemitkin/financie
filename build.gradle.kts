@@ -16,8 +16,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.flywaydb:flyway-core")
-//    implementation("com.amazonaws.serverless:aws-serverless-java-container-springboot3:2.0.0")
-    implementation("com.amazonaws.serverless:aws-serverless-java-container-springboot3:2.0.0-M2")
+    implementation("com.amazonaws.serverless:aws-serverless-java-container-springboot3:2.0.1")
 
     implementation("org.crac:crac:1.4.0")
 
