@@ -12,6 +12,7 @@ import com.github.msemitkin.financie.telegram.callback.CallbackService;
 import com.github.msemitkin.financie.telegram.callback.CallbackType;
 import com.github.msemitkin.financie.telegram.callback.command.GetMonthlyCategoriesCommand;
 import com.github.msemitkin.financie.telegram.callback.command.GetMonthlyCategoryTransactionsCommand;
+import com.github.msemitkin.financie.telegram.callback.command.GetMonthlyReportCommand;
 import com.github.msemitkin.financie.telegram.updatehandler.categories.Response;
 import org.apache.commons.text.StringSubstitutor;
 import org.springframework.beans.factory.annotation.Value;
@@ -98,17 +99,6 @@ public class MonthlyCategoriesResponseService {
     }
 
 
-    private InlineKeyboardRow getPageButtons(int monthOffset, Locale locale) {
-        var leftButton = button(
-            ResourceService.getValue("button.left", locale),
-            getPageButtonCallbackData(monthOffset - 1));
-        var rightButton = button(
-            ResourceService.getValue("button.right", locale),
-            getPageButtonCallbackData(monthOffset + 1)
-        );
-        return new InlineKeyboardRow(monthOffset == 0 ? List.of(leftButton) : List.of(leftButton, rightButton));
-    }
-
     private InlineKeyboardButton button(String text, String callbackData) {
         return InlineKeyboardButton.builder()
             .text(text)
@@ -130,7 +120,7 @@ public class MonthlyCategoriesResponseService {
     }
 
     private InlineKeyboardMarkup getKeyboard(List<CategoryStatistics> statistics, int monthOffset, Locale locale) {
-        List<InlineKeyboardRow> rows = statistics.stream()
+        return statistics.stream()
             .map(stats -> {
                 String text = "%s: %s".formatted(formatNumber(stats.amount()), stats.categoryName());
                 var callback = new Callback<>(
@@ -142,8 +132,30 @@ public class MonthlyCategoriesResponseService {
             })
             .map(InlineKeyboardRow::new)
             .limit(maxNumberOfStatisticsRecords)
-            .collect(Collectors.toCollection(ArrayList::new));
-        rows.add(getPageButtons(monthOffset, locale));
-        return InlineKeyboardMarkup.builder().keyboard(rows).build();
+            .collect(Collectors.collectingAndThen(Collectors.toCollection(ArrayList::new), rows -> {
+                rows.add(getPageButtons(monthOffset, locale));
+                rows.add(new InlineKeyboardRow(getMonthlyReportButton(monthOffset, locale)));
+                return InlineKeyboardMarkup.builder().keyboard(rows).build();
+            }));
+    }
+
+    private InlineKeyboardRow getPageButtons(int monthOffset, Locale locale) {
+        var leftButton = button(
+            ResourceService.getValue("button.left", locale),
+            getPageButtonCallbackData(monthOffset - 1));
+        var rightButton = button(
+            ResourceService.getValue("button.right", locale),
+            getPageButtonCallbackData(monthOffset + 1)
+        );
+        return new InlineKeyboardRow(monthOffset == 0 ? List.of(leftButton) : List.of(leftButton, rightButton));
+    }
+
+    private InlineKeyboardButton getMonthlyReportButton(int monthOffset, Locale locale) {
+        var callback = new Callback<>(CallbackType.GET_MONTHLY_REPORT,
+            new GetMonthlyReportCommand(OffsetDateTime.now().plusMonths(monthOffset)));
+
+        UUID callbackId = callbackService.saveCallback(callback);
+
+        return button(ResourceService.getValue("button.get-monthly-report", locale), callbackId.toString());
     }
 }

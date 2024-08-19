@@ -10,6 +10,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,6 +69,22 @@ public class TransactionService {
             .findAllByUserIdAndCategoryIdAndDateTimeBetween(userId, categoryId, from, to);
 
         return transactions.stream().map(tran -> TransactionMapper.toTransaction(tran, category)).toList();
+    }
+
+    public List<Transaction> getTransactions(
+        long userId,
+        OffsetDateTime from,
+        OffsetDateTime to
+    ) {
+        List<TransactionEntity> transactions = transactionRepository
+            .findAllByUserIdAndDateTimeBetween(userId, from.toLocalDateTime(), to.toLocalDateTime());
+
+        return transactions.stream()
+            .map(tran -> categoryRepository
+                .findById(tran.getCategoryId())
+                .map(CategoryEntity::getName)
+                .map(categoryName -> TransactionMapper.toTransaction(tran, categoryName))
+                .orElseThrow()).toList();
     }
 
     public void deleteTransaction(long transactionId) {

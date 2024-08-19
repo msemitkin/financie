@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 @Configuration
 public class JsonConfig {
@@ -14,6 +15,7 @@ public class JsonConfig {
     public Gson gson() {
         return new GsonBuilder()
             .registerTypeAdapter(LocalDate.class, new LocalDateTypeAdapter())
+            .registerTypeAdapter(OffsetDateTime.class, new OffsetDateTimeTypeAdapter())
             .create();
     }
 }

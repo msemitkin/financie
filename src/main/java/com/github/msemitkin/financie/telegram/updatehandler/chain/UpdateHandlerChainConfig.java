@@ -4,6 +4,7 @@ import com.github.msemitkin.financie.telegram.updatehandler.AddTransactionStateH
 import com.github.msemitkin.financie.telegram.updatehandler.DefaultUpdateHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.ImportStateHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.MenuStateHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.MonthlyReportUpdateHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.SettingsStateHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.categories.daily.GetDailyCategoriesHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.categories.daily.GetTodayCategoriesHandler;
@@ -45,7 +46,8 @@ public class UpdateHandlerChainConfig {
         SaveTransactionHandler saveTransactionHandler,
         SettingsStateHandler settingsStateHandler,
         AddTransactionStateHandler addTransactionStateHandler,
-        DefaultUpdateHandler defaultUpdateHandler
+        DefaultUpdateHandler defaultUpdateHandler,
+        MonthlyReportUpdateHandler monthlyReportUpdateHandler
     ) {
         return UpdateHandlerChain.builder()
             //commands
@@ -65,6 +67,7 @@ public class UpdateHandlerChainConfig {
             .addHandler(importStateHandler)
             .addHandler(settingsStateHandler)
             .addHandler(addTransactionStateHandler)
+            .addHandler(monthlyReportUpdateHandler)
 
             .addHandler(getTodayCategoriesHandler)
             .addHandler(getThisMonthCategoriesHandler)

@@ -1,11 +1,13 @@
 package com.github.msemitkin.financie.csv;
 
-import com.github.msemitkin.financie.domain.Transaction;
 import com.github.msemitkin.financie.domain.TransactionService;
+import com.github.msemitkin.financie.domain.util.TransactionUtil;
 import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
-import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class CsvFileHistoryExportService {
@@ -21,14 +23,9 @@ public class CsvFileHistoryExportService {
     }
 
     public byte[] getFileToExport(long userId, ZoneId timeZoneId) {
-        List<Transaction> transactions = transactionService.getTransactions(userId)
+        return transactionService.getTransactions(userId)
             .stream()
-            .map(tran -> new Transaction(
-                tran.id(), tran.userId(), tran.amount(),
-                tran.category(),
-                tran.description(),
-                tran.time().atZone(ZoneId.systemDefault()).withZoneSameInstant(timeZoneId).toLocalDateTime())
-            ).toList();
-        return csvWriter.writeCsvFile(transactions);
+            .map(tran -> TransactionUtil.atZoneSameInstant(tran, timeZoneId))
+            .collect(Collectors.collectingAndThen(toList(), csvWriter::writeCsvFile));
     }
 }
