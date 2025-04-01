@@ -35,7 +35,7 @@ public class KeyboardService {
                 row(textButton(ResourceService.getValue("button.monobank", locale))),
                 row(textButton(ResourceService.getValue("button.back", locale)))
             );
-            case IMPORT, ADD_TRANSACTION -> keyboard(
+            case IMPORT, ADD_TRANSACTION, ENTER_TRANSACTION_CATEGORY -> keyboard(
                 row(textButton(ResourceService.getValue("button.cancel", locale)))
             );
         };

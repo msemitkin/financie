@@ -8,7 +8,8 @@ public enum StateType {
     SETTINGS(2),
     MENU(3),
     IMPORT(4),
-    ADD_TRANSACTION(5);
+    ADD_TRANSACTION(5),
+    ENTER_TRANSACTION_CATEGORY(6);
 
     private final int id;
 

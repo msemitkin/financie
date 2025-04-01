@@ -2,6 +2,7 @@ package com.github.msemitkin.financie.telegram.updatehandler.chain;
 
 import com.github.msemitkin.financie.telegram.updatehandler.AddTransactionStateHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.DefaultUpdateHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.EnterTransactionCategoryStateHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.ImportStateHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.MenuStateHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.MonthlyReportUpdateHandler;
@@ -19,6 +20,7 @@ import com.github.msemitkin.financie.telegram.updatehandler.transaction.DeleteTr
 import com.github.msemitkin.financie.telegram.updatehandler.transaction.GetDailyTransactionsHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.transaction.GetMonthlyCategoryTransactionsHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.transaction.GetTransactionActionsMenuHandler;
+import com.github.msemitkin.financie.telegram.updatehandler.transaction.SaveMonobankTransactionCallbackHandler;
 import com.github.msemitkin.financie.telegram.updatehandler.transaction.SaveTransactionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,6 +41,7 @@ public class UpdateHandlerChainConfig {
         GetTodayCategoriesHandler getTodayCategoriesHandler,
         GetTransactionActionsMenuHandler getTransactionActionsMenuHandler,
         DeleteTransactionHandler deleteTransactionHandler,
+        SaveMonobankTransactionCallbackHandler saveMonobankTransactionCallbackHandler,
         AddTransactionCallbackHandler addTransactionCallbackHandler,
         MenuHandler menuHandler,
         MenuStateHandler menuStateHandler,
@@ -46,6 +49,7 @@ public class UpdateHandlerChainConfig {
         SaveTransactionHandler saveTransactionHandler,
         SettingsStateHandler settingsStateHandler,
         AddTransactionStateHandler addTransactionStateHandler,
+        EnterTransactionCategoryStateHandler enterTransactionCategoryStateHandler,
         DefaultUpdateHandler defaultUpdateHandler,
         MonthlyReportUpdateHandler monthlyReportUpdateHandler
     ) {
@@ -61,6 +65,7 @@ public class UpdateHandlerChainConfig {
             .addHandler(getMonthlyCategoryTransactionsHandler)
             .addHandler(getTransactionActionsMenuHandler)
             .addHandler(deleteTransactionHandler)
+            .addHandler(saveMonobankTransactionCallbackHandler)
             .addHandler(addTransactionCallbackHandler)
             .addHandler(menuHandler)
             .addHandler(menuStateHandler)
@@ -72,6 +77,7 @@ public class UpdateHandlerChainConfig {
             .addHandler(getTodayCategoriesHandler)
             .addHandler(getThisMonthCategoriesHandler)
             .addHandler(saveTransactionHandler)
+            .addHandler(enterTransactionCategoryStateHandler)
             .addHandler(defaultUpdateHandler)
             .build();
     }

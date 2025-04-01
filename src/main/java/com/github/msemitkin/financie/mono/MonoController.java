@@ -2,6 +2,10 @@ package com.github.msemitkin.financie.mono;
 
 import com.github.msemitkin.financie.domain.UserService;
 import com.github.msemitkin.financie.telegram.ResponseSender;
+import com.github.msemitkin.financie.telegram.callback.Callback;
+import com.github.msemitkin.financie.telegram.callback.CallbackService;
+import com.github.msemitkin.financie.telegram.callback.CallbackType;
+import com.github.msemitkin.financie.telegram.callback.command.SaveMonobankTransactionCommand;
 import com.github.msemitkin.financie.telegram.util.ApplicationUrlProvider;
 import com.github.msemitkin.financie.telegram.util.MarkdownUtil;
 import org.slf4j.Logger;
@@ -13,8 +17,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 public class MonoController {
@@ -27,16 +35,18 @@ public class MonoController {
     private final MonobankService monobankService;
     private final UserService userService;
     private final ApplicationUrlProvider applicationUrlProvider;
+    private final CallbackService callbackService;
 
     public MonoController(
         ResponseSender responseSender,
         MonobankService monobankService,
-        UserService userService, ApplicationUrlProvider applicationUrlProvider
+        UserService userService, ApplicationUrlProvider applicationUrlProvider, CallbackService callbackService
     ) {
         this.responseSender = responseSender;
         this.monobankService = monobankService;
         this.userService = userService;
         this.applicationUrlProvider = applicationUrlProvider;
+        this.callbackService = callbackService;
     }
 
     @GetMapping(MONOBANK_CALLBACK_MAPPING + "/users/{userId}")
@@ -66,10 +76,22 @@ public class MonoController {
             return ResponseEntity.ok().build();
         }
         logger.debug("Received event: {}", event);
+
         StatementItem tx = event.get().getData().getStatementItem();
+        if (tx.getAmount() >= 0) {
+            return ResponseEntity.ok().build();
+        }
+
         long telegramChatId = userService.getUserById(userId).telegramChatId().longValue();
-        responseSender.sendResponse(telegramChatId, null, null,
-            MarkdownUtil.escapeMarkdownV2("Received transaction for amount: " + tx.getAmount() / 100.0));
+        double amount = -tx.getAmount() / 100.0;
+        UUID callbackId = callbackService.saveCallback(new Callback<>(CallbackType.SAVE_MONOBANK_TRANSACTION, new SaveMonobankTransactionCommand(amount)));
+        responseSender.sendResponse(telegramChatId, null, InlineKeyboardMarkup.builder()
+                .keyboardRow(new InlineKeyboardRow(InlineKeyboardButton.builder()
+                    .text("Save")
+                    .callbackData(callbackId.toString())
+                    .build()))
+                .build(),
+            MarkdownUtil.escapeMarkdownV2(tx.getDescription() + ": " + amount));
         return ResponseEntity.ok().build();
     }
 }
