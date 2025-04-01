@@ -32,6 +32,9 @@ dependencies {
     implementation("com.google.maps:google-maps-services:2.2.0")
     implementation("javax.xml.bind:jaxb-api:2.3.1")
 
+    implementation("org.bouncycastle:bcprov-jdk15to18:1.78.1")
+    implementation("org.bouncycastle:bcpkix-jdk15to18:1.78.1")
+
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")

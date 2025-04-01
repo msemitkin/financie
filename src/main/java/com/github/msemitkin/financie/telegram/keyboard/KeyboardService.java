@@ -32,6 +32,7 @@ public class KeyboardService {
             );
             case SETTINGS -> keyboard(
                 row(requestLocationButton(ResourceService.getValue("button.change-timezone", locale))),
+                row(textButton(ResourceService.getValue("button.monobank", locale))),
                 row(textButton(ResourceService.getValue("button.back", locale)))
             );
             case IMPORT, ADD_TRANSACTION -> keyboard(

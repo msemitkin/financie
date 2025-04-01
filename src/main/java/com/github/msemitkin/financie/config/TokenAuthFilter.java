@@ -25,6 +25,11 @@ public class TokenAuthFilter extends OncePerRequestFilter {
         @NonNull HttpServletResponse response,
         @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+        if (!"/financie".equals(request.getRequestURI())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String tokenValue = request.getHeader("X-Telegram-Bot-Api-Secret-Token");
         if (token.equals(tokenValue)) {
             logger.trace("Authorized request");
