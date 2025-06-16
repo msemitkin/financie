@@ -34,8 +34,10 @@ public class TimeZoneUtils {
     }
 
     public static LocalDateTime getUTCStartOfTheMonthInTimeZone(YearMonth yearMonth, ZoneId zoneId) {
-        OffsetDateTime startOfTheMonth = OffsetDateTime
-            .of(yearMonth.getYear(), yearMonth.getMonthValue(), 1, 0, 0, 0, 0, ZoneOffset.of(zoneId.getId()));
-        return LocalDateTime.ofInstant(startOfTheMonth.toInstant(), ZoneId.of("UTC"));
+        return yearMonth
+            .atDay(1)
+            .atStartOfDay(zoneId)
+            .withZoneSameInstant(ZoneOffset.UTC)
+            .toLocalDateTime();
     }
 }
